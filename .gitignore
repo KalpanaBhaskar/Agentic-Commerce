@@ -14,3 +14,7 @@ __pycache__
 
 # tooling
 .latentcode_session
+
+# local-only project docs (kept on disk, intentionally not tracked on GitHub)
+SESSION_PROMPTS.md
+HOW_TO_USE_CLAUDE_CODE.md
