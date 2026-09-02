@@ -1,5 +1,16 @@
-﻿.env
+# dependencies
 node_modules
+
+# env / secrets
+.env
+
+# audit trail & logs (runtime-generated, never commit)
+audit.log
+*.log
+
+# python leftovers from initial init
 __pycache__
 *.pyc
+
+# tooling
 .latentcode_session
