@@ -1,0 +1,112 @@
+[
+  {
+    "id": "prod_001",
+    "name": "Sony WH-1000XM5 Wireless Headphones",
+    "description": "Industry-leading noise cancellation, 30hr battery, multipoint Bluetooth connection.",
+    "price_paise": 2999900,
+    "currency": "INR",
+    "category": "electronics",
+    "stock": 15,
+    "upsell_ids": ["prod_005", "prod_006"],
+    "tags": ["headphones", "noise-cancelling", "wireless", "bluetooth", "sony", "audio"]
+  },
+  {
+    "id": "prod_002",
+    "name": "Logitech MX Master 3S Wireless Mouse",
+    "description": "Ergonomic productivity mouse with quiet clicks, 8K DPI tracking, and USB-C fast charging.",
+    "price_paise": 899900,
+    "currency": "INR",
+    "category": "electronics",
+    "stock": 40,
+    "upsell_ids": ["prod_003", "prod_007"],
+    "tags": ["mouse", "wireless", "logitech", "productivity", "ergonomic"]
+  },
+  {
+    "id": "prod_003",
+    "name": "Keychron K8 Mechanical Keyboard",
+    "description": "Hot-swappable wireless mechanical keyboard, tenkeyless layout, RGB backlight, Mac/Windows.",
+    "price_paise": 749900,
+    "currency": "INR",
+    "category": "electronics",
+    "stock": 25,
+    "upsell_ids": ["prod_002", "prod_007"],
+    "tags": ["keyboard", "mechanical", "wireless", "keychron", "productivity"]
+  },
+  {
+    "id": "prod_004",
+    "name": "Anker PowerCore 20000mAh Power Bank",
+    "description": "High-capacity portable charger with 30W USB-C Power Delivery, charges a laptop or phone.",
+    "price_paise": 449900,
+    "currency": "INR",
+    "category": "electronics",
+    "stock": 60,
+    "upsell_ids": ["prod_006"],
+    "tags": ["powerbank", "charging", "anker", "portable", "usb-c"]
+  },
+  {
+    "id": "prod_005",
+    "name": "Hard-Shell Headphone Carry Case",
+    "description": "Crush-resistant travel case with molded interior, fits over-ear headphones and cables.",
+    "price_paise": 199900,
+    "currency": "INR",
+    "category": "accessories",
+    "stock": 80,
+    "upsell_ids": ["prod_001"],
+    "tags": ["case", "headphones", "travel", "protection", "accessory"]
+  },
+  {
+    "id": "prod_006",
+    "name": "USB-C Braided Fast-Charge Cable (2m)",
+    "description": "Durable nylon-braided USB-C to USB-C cable, 100W PD, 2 metres, tangle-free.",
+    "price_paise": 79900,
+    "currency": "INR",
+    "category": "accessories",
+    "stock": 200,
+    "upsell_ids": ["prod_004"],
+    "tags": ["cable", "usb-c", "charging", "accessory", "braided"]
+  },
+  {
+    "id": "prod_007",
+    "name": "Extended Desk Mat / Mousepad (XL)",
+    "description": "900x400mm stitched-edge desk mat with non-slip base for keyboard and mouse.",
+    "price_paise": 149900,
+    "currency": "INR",
+    "category": "accessories",
+    "stock": 120,
+    "upsell_ids": ["prod_002", "prod_003"],
+    "tags": ["mousepad", "deskmat", "desk", "accessory", "xl"]
+  },
+  {
+    "id": "prod_008",
+    "name": "Classic Cotton Crew T-Shirt (Blue)",
+    "description": "100% combed cotton crew-neck tee, pre-shrunk, midnight blue. Unisex regular fit.",
+    "price_paise": 129900,
+    "currency": "INR",
+    "category": "apparel",
+    "stock": 100,
+    "upsell_ids": ["prod_009", "prod_010"],
+    "tags": ["t-shirt", "tshirt", "cotton", "blue", "apparel", "unisex"]
+  },
+  {
+    "id": "prod_009",
+    "name": "Zip-Up Fleece Hoodie (Charcoal)",
+    "description": "Midweight brushed-fleece full-zip hoodie with kangaroo pockets, charcoal grey.",
+    "price_paise": 349900,
+    "currency": "INR",
+    "category": "apparel",
+    "stock": 70,
+    "upsell_ids": ["prod_008", "prod_010"],
+    "tags": ["hoodie", "fleece", "zip-up", "charcoal", "apparel", "jacket"]
+  },
+  {
+    "id": "prod_010",
+    "name": "Embroidered Baseball Cap (Black)",
+    "description": "Six-panel structured cotton twill cap with adjustable strap and embroidered logo, black.",
+    "price_paise": 99900,
+    "currency": "INR",
+    "category": "apparel",
+    "stock": 150,
+    "upsell_ids": ["prod_008", "prod_009"],
+    "tags": ["cap", "hat", "baseball-cap", "black", "apparel"]
+  }
+]
