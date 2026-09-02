@@ -39,3 +39,21 @@ _Dates are intentionally omitted._
 - Verified against Razorpay test mode: real orders created (`order_TX9yN7HZ7gasqE`, `order_TX9zwyIB5Uae9F`), paise math correct (`2999900`; `129900 × 2 = 259800`), audit lines appended.
 
 ---
+
+## Feature 3 — Webhook handler + payment capture
+- **Branch:** `feat/03-webhook-capture`
+- **PR:** [#4](https://github.com/KalpanaBhaskar/Agentic-Commerce/pull/4)
+
+**Prompt:**
+> Build the webhook handler.
+> Create/modify: (1) `src/webhooks/handler.js` — Express router for `POST /webhook`: read the RAW body (`express.raw()`, not `express.json()`); verify HMAC-SHA256 via the razorpay SDK's `validateWebhookSignature()`; invalid signature → 400 + warn; dispatch by event type — `payment.captured` → `capturePayment()` + log `payment_captured`, `payment.failed` → call the failure handler (stub: log `payment_failed`); always return 200 on handled events so Razorpay doesn't retry. (2) Update `server.js` to mount the webhook router BEFORE `express.json()` (raw body must be parsed before JSON). (3) `GET /audit` — read `audit.log`, parse JSONL, return the array sorted by timestamp desc.
+> Constraints: raw-body preservation is critical for signature verification; log every webhook received (even invalid) with enough context to debug.
+
+**Outcome:** ✅
+- `src/webhooks/handler.js` — raw-body router: config guard (500 if no `WEBHOOK_SECRET`), missing/invalid signature → 400, then dispatch. `payment.captured` attempts an idempotent `capturePayment()` and guarantees exactly one `payment_captured` audit line (real "already captured" and dashboard dummy-id events both fall back to logging the confirmed payload). Every hit is console-logged (event, payment/order id, byte count); handled events always return 200.
+- `src/failures/handler.js` — stub `handlePaymentFailed()` logs `payment_failed` (retry + payment-link fallback lands in Feature 6).
+- `src/audit/logger.js` — added `readAudit()` (tolerates missing file, skips corrupt lines, sorts newest-first).
+- `server.js` — mounts `/webhook` (raw) before `express.json()`; adds `GET /audit`.
+- Verified locally: self-signed HMAC payload → 200 + `payment_captured` audit line; tampered body → 400 `invalid_signature`; missing header → 400 `missing_signature`; `GET /audit` returns newest-first JSON.
+
+---

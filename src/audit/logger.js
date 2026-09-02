@@ -55,4 +55,37 @@ function logAction(entry = {}) {
   return record;
 }
 
-module.exports = { logAction, ACTIONS, AUDIT_PATH };
+/**
+ * Read the entire audit trail back as an array of records, NEWEST FIRST.
+ * Tolerates a missing file (returns []) and skips any unparseable line so one
+ * corrupt entry can't break the whole read. Backs the GET /audit route and,
+ * later, `npm run audit` (Feature 7).
+ * @returns {object[]} records sorted by timestamp descending
+ */
+function readAudit() {
+  let raw;
+  try {
+    raw = fs.readFileSync(AUDIT_PATH, 'utf-8');
+  } catch (e) {
+    if (e.code === 'ENOENT') return []; // no money actions logged yet
+    throw e;
+  }
+
+  const records = raw
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch (_) {
+        return null; // skip a corrupt line rather than failing the whole read
+      }
+    })
+    .filter(Boolean);
+
+  // Newest first. Lexicographic compare is correct for ISO-8601 timestamps.
+  records.sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+  return records;
+}
+
+module.exports = { logAction, readAudit, ACTIONS, AUDIT_PATH };
