@@ -9,8 +9,12 @@
 const fs = require('fs');
 const path = require('path');
 
-// audit.log lives at the repo root and is gitignored.
-const AUDIT_PATH = path.join(__dirname, '..', '..', 'audit.log');
+// audit.log lives at the repo root and is gitignored. The location is overridable
+// via AUDIT_LOG_PATH so tests can point the logger at a throwaway temp file and
+// never touch the real trail; production leaves it unset and uses the default.
+const AUDIT_PATH = process.env.AUDIT_LOG_PATH
+  ? path.resolve(process.env.AUDIT_LOG_PATH)
+  : path.join(__dirname, '..', '..', 'audit.log');
 
 // The only allowed action values (see CLAUDE.md §6).
 const ACTIONS = Object.freeze([
@@ -22,6 +26,11 @@ const ACTIONS = Object.freeze([
   'link_sent',
 ]);
 
+// Fields the CALLER must supply on every entry. `timestamp` is deliberately NOT
+// here: the logger stamps it itself (server-authoritative) so the time of a money
+// action can never be forged or omitted — it is always present in the output.
+const REQUIRED_FIELDS = Object.freeze(['action', 'status']);
+
 /**
  * Append one entry to the audit log as a single JSONL line.
  * Fields are normalised to the fixed schema so every line has the same shape.
@@ -32,21 +41,34 @@ const ACTIONS = Object.freeze([
  * @param {number} [entry.amount_paise]   integer paise (never floats)
  * @param {string} [entry.currency='INR']
  * @param {string} [entry.product_id]
- * @param {string} [entry.status]         e.g. "success" | "failed"
+ * @param {string} [entry.status]         e.g. "success" | "failed" (required)
  * @param {string} [entry.agent_reasoning] why the agent took this action
  * @param {string} [entry.session_id]
  * @param {string} [entry.timestamp]      optional override; defaults to now (ISO8601)
  * @returns {object} the normalised record that was written
+ * @throws {Error} code='AUDIT_VALIDATION' when a required field (action/status) is missing
  */
 function logAction(entry = {}) {
+  // Fail fast on a malformed entry: a money action with no `action` or `status`
+  // would poison the "explainable + immutable" trail, so we refuse to write it.
+  // (`timestamp` is not required from the caller — we stamp it just below.)
+  for (const field of REQUIRED_FIELDS) {
+    const value = entry[field];
+    if (value === undefined || value === null || value === '') {
+      const err = new Error(`logAction: "${field}" is a required audit field`);
+      err.code = 'AUDIT_VALIDATION';
+      throw err;
+    }
+  }
+
   const record = {
     timestamp: entry.timestamp || new Date().toISOString(),
-    action: entry.action || 'unknown',
+    action: entry.action,
     order_id: entry.order_id ?? null,
     amount_paise: entry.amount_paise ?? null,
     currency: entry.currency ?? 'INR',
     product_id: entry.product_id ?? null,
-    status: entry.status ?? null,
+    status: entry.status,
     agent_reasoning: entry.agent_reasoning ?? null,
     session_id: entry.session_id ?? null,
   };

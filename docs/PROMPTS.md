@@ -120,3 +120,24 @@ _Dates are intentionally omitted._
 
 ---
 
+## Feature 7 — Audit trail viewer + Jest suite
+- **Branch:** `feat/07-audit-tests`
+- **PR:** [#8](https://github.com/KalpanaBhaskar/Agentic-Commerce/pull/8)
+
+**Prompt:**
+> Build the audit viewer + Jest tests.
+> Create: (1) `src/audit/viewer.js` — CLI that reads `audit.log`, parses each JSONL line, prints a formatted table (timestamp | action | order_id | amount_inr | status | reasoning truncated 40 chars) with an optional `--action=` filter; wire `"audit": "node src/audit/viewer.js"`. (2) `tests/audit.test.js` — `logAction()` creates the file if absent, appends (not overwrites), writes valid JSON per line, throws when required fields are missing. (3) `tests/webhook.test.js` — `validateWebhookSignature()` true for valid / false for tampered; handler returns 400 for invalid and 200 for valid. (4) `tests/failure.test.js` — `handlePaymentFailure()` logs `payment_failed` + `retry_attempted` and returns a `payment_link` URL; mock the Razorpay SDK (no real API calls). Add `"test": "jest"` and `"test:watch": "jest --watch"`.
+> Constraints: adhere to best industry coding practices and testing methods.
+
+**Outcome:** ✅
+- `src/audit/viewer.js` — read-only CLI over the shared `readAudit()` (newest first, tolerant of missing file / corrupt lines). Renders a fixed-width table with per-column widths, right-aligned `AMOUNT_INR` (paise → `₹x,xxx.00`), `—` for null cells, ISO → `YYYY-MM-DD HH:MM:SS` timestamps, and reasoning truncated to 40 chars. Flags: `--action=<action>` filter, `--limit=<n>`, `--help`. Pure helpers exported for unit import; only runs on direct invocation.
+- `src/audit/logger.js` — two testability/robustness upgrades: (a) `AUDIT_PATH` is now overridable via `AUDIT_LOG_PATH` so tests write to a throwaway temp file and never touch the real trail; (b) `logAction()` now validates **required fields** and throws `code='AUDIT_VALIDATION'` when `action` or `status` is missing (a malformed money-action line is refused rather than silently written). `timestamp` stays **server-stamped** (auto-filled, never caller-supplied) — you don't let a caller forge the time of a money action — so the suite asserts action/status validation + guaranteed timestamp auto-stamping instead of a caller-passed timestamp. All existing callers already pass `action` + `status`, so nothing broke.
+- `tests/` (Jest, **17 tests / 3 suites, all green**), hermetic — no network, no live Razorpay/LLM:
+  - `audit.test.js` — create-if-absent, append-not-overwrite (order preserved), one valid JSON object per line matching the 9-key schema, ISO timestamp auto-stamp, throws on missing `action`/`status` (and writes nothing on reject), `readAudit()` `[]`-on-missing + newest-first.
+  - `webhook.test.js` — `Razorpay.validateWebhookSignature()` true/false (valid vs tampered body); `POST /webhook` via **supertest** → 200 for a valid signature (benign unhandled event, no capture side effect), 400 for an invalid signature, 400 for a missing header.
+  - `failure.test.js` — `jest.mock()` on `src/api/razorpay` + `src/api/paymentLinks` (**no real API calls**): logs `payment_failed` + `retry_attempted`, returns the mocked `payment_link` when unrecovered, and records `payment_captured` (no link) when the order is paid on retry. `retryDelayMs: 0` so no real 2s wait.
+- `package.json` — `"test": "jest"`, `"test:watch": "jest --watch"`, kept `"audit"`; added a minimal Jest config (`testEnvironment: node`, `testMatch: tests/**/*.test.js`) and `supertest` (devDependency).
+- Verified: `npm test` → 17 passed; `npm run audit` renders the full 42-entry trail and `--action=order_created` filters to 15 — both readable and aligned. Confirmed the temp-file isolation held (no `TEST123`/`FAKE_LINK` rows leaked into the real `audit.log`).
+
+---
+
