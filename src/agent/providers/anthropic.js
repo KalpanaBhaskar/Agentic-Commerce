@@ -44,13 +44,12 @@ function initMessages(userMessage) {
  * @returns {Promise<{assistantMessage:object, text:string, toolCalls:Array<{id,name,input}>, stop:boolean}>}
  */
 async function callModel({ system, tools, messages }) {
-  const resp = await getClient().messages.create({
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
-    system,
-    tools,
-    messages,
-  });
+  const params = { model: MODEL, max_tokens: MAX_TOKENS, system, messages };
+  // Only advertise tools when there are some — this lets the same method serve
+  // plain completions (e.g. the upsell pitch) as well as the tool-use loop.
+  if (Array.isArray(tools) && tools.length > 0) params.tools = tools;
+
+  const resp = await getClient().messages.create(params);
 
   const text = resp.content
     .filter((b) => b.type === 'text')

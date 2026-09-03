@@ -89,10 +89,11 @@ app.post('/orders', async (req, res) => {
   }
 });
 
-// POST /chat — conversational checkout (Feature 4). Body: { message, session_id? }.
-// Claude runs a BOUNDED tool_use loop (search -> order -> upsell -> status) via
+// POST /chat — conversational checkout (Features 4-5). Body: { message, session_id? }.
+// Claude runs a BOUNDED tool_use loop (search -> order -> status) via
 // src/agent/checkout.js; the agent can only act through the four tool schemas.
-// Returns its natural-language reply plus any order_id / payment_link produced.
+// After an order is placed, a tailored upsell is appended (Feature 5). Returns
+// the natural-language reply, any order_id / payment_link, and the upsell shown.
 app.post('/chat', async (req, res) => {
   const body = req.body || {};
   const message = body.message;
@@ -103,14 +104,21 @@ app.post('/chat', async (req, res) => {
   }
 
   try {
-    const { response_text, order_id, payment_link, tools_used, session_id } = await processCheckout(
-      message,
-      body.session_id
-    );
+    const {
+      response_text,
+      order_id,
+      payment_link,
+      tools_used,
+      session_id,
+      upsell_shown,
+      upsell_products,
+    } = await processCheckout(message, body.session_id);
     return res.json({
       reply: response_text,
       order_id: order_id ?? null,
       payment_link: payment_link ?? null,
+      upsell_shown,
+      upsell_products,
       tools_used,
       session_id,
     });

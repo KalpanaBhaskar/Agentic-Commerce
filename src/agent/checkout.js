@@ -11,9 +11,11 @@
 
 const crypto = require('crypto');
 
-const { loadCatalog } = require('../catalog');
+const { loadCatalog, getProduct, getUpsells } = require('../catalog');
 const { TOOLS, executeTool } = require('./tools');
 const { getProvider } = require('./providers');
+const { generateUpsellPitch, MAX_UPSELLS } = require('./upsell');
+const { logAction } = require('../audit/logger');
 
 const MAX_TURNS = 8; // safety bound on the agentic loop
 
@@ -42,8 +44,10 @@ function buildSystemPrompt() {
     'Order flow: call search_catalog to find the product and its id, then call ' +
       'create_order with that product_id. When the customer clearly wants to buy, ' +
       'proceed and create the order right away — default quantity to 1 if they did ' +
-      'not specify one (do not stop to ask). After creating an order, call ' +
-      'get_upsell_suggestions for that product and briefly mention any add-ons.',
+      'not specify one (do not stop to ask). After an order is placed, do NOT add ' +
+      'your own add-on suggestions — a tailored upsell is appended automatically. ' +
+      'Use get_upsell_suggestions only if the customer asks what pairs with a ' +
+      'product before buying.',
     '',
     'All money is in paise (1 rupee = 100 paise). Show prices to the customer in ' +
       'rupees (₹). Keep replies concise.',
@@ -59,7 +63,7 @@ function buildSystemPrompt() {
  * Run the conversational checkout agent for one user message.
  * @param {string} userMessage   the customer's plain-language message
  * @param {string} [sessionId]   optional; a UUID is generated if omitted
- * @returns {Promise<{response_text:string, order_id:(string|null), payment_link:(string|null), tools_used:string[], session_id:string}>}
+ * @returns {Promise<{response_text:string, order_id:(string|null), payment_link:(string|null), tools_used:string[], session_id:string, upsell_shown:boolean, upsell_products:Array<{id:string,name:string,price_paise:number,price_inr:number}>}>}
  */
 async function processCheckout(userMessage, sessionId) {
   const session_id = sessionId || crypto.randomUUID();
@@ -70,6 +74,7 @@ async function processCheckout(userMessage, sessionId) {
 
   const tools_used = [];
   let order_id = null;
+  let ordered_product_id = null;
   let payment_link = null;
   let response_text = '';
 
@@ -96,6 +101,7 @@ async function processCheckout(userMessage, sessionId) {
         result = await executeTool(tc.name, tc.input, { reasoning: text, session_id });
         if (tc.name === 'create_order' && result && result.order_id) {
           order_id = result.order_id;
+          ordered_product_id = result.product_id || ordered_product_id;
           payment_link = result.payment_link || payment_link;
         }
       } catch (e) {
@@ -114,7 +120,49 @@ async function processCheckout(userMessage, sessionId) {
       'Sorry — I could not complete that just now. Please try rephrasing what you would like to buy.';
   }
 
-  return { response_text, order_id, payment_link, tools_used, session_id };
+  // --- Post-order upsell (Feature 5) --------------------------------------
+  // Once an order exists, upselling is done here as ORCHESTRATION rather than
+  // left to the model's discretion: we look up the product's add-ons and, if any
+  // exist, have the model craft a short pitch (generateUpsellPitch). This makes
+  // the upsell reliable and guarantees exactly one `upsell_shown` audit line
+  // whenever add-ons are actually shown — carrying the pitch's own reasoning (§0).
+  let upsell_shown = false;
+  let upsell_products = [];
+  if (order_id && ordered_product_id) {
+    const orderedProduct = getProduct(ordered_product_id);
+    const addons = getUpsells(ordered_product_id).slice(0, MAX_UPSELLS);
+    if (orderedProduct && addons.length > 0) {
+      const { pitch, reasoning } = await generateUpsellPitch(orderedProduct, addons);
+      if (pitch) {
+        response_text = `${response_text}\n\n${pitch}`.trim();
+        upsell_shown = true;
+        upsell_products = addons.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price_paise: p.price_paise,
+          price_inr: p.price_paise / 100,
+        }));
+        logAction({
+          action: 'upsell_shown',
+          order_id,
+          product_id: ordered_product_id,
+          status: 'success',
+          agent_reasoning: reasoning,
+          session_id,
+        });
+      }
+    }
+  }
+
+  return {
+    response_text,
+    order_id,
+    payment_link,
+    tools_used,
+    session_id,
+    upsell_shown,
+    upsell_products,
+  };
 }
 
 module.exports = { processCheckout, buildSystemPrompt };
