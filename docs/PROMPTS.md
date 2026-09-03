@@ -102,3 +102,21 @@ _Dates are intentionally omitted._
 
 ---
 
+## Feature 6 — Graceful failure handling
+- **Branch:** `feat/06-failure-handler`
+- **PR:** [#7](https://github.com/KalpanaBhaskar/Agentic-Commerce/pull/7)
+
+**Prompt:**
+> Build the payment failure handler.
+> Create/modify: (1) `src/failures/handler.js` — export `async handlePaymentFailure(webhookPayload)`: extract payment_id / order_id / error_description; log `payment_failed` (status=failed); wait 2000ms (backoff); retry once by fetching the order and checking whether a payment now exists; log `retry_attempted`; if still unpaid → `createPaymentLink({order_id, amount_paise, description})`, log `link_sent`, return `{recovered:true, payment_link, message}`; if the retry succeeded → log `payment_captured`, return `{recovered:true, message}`. (2) Update `src/webhooks/handler.js` to call it on `payment.failed`. (3) Add `GET /simulate-failure` (demo-only): create a test order, call `handlePaymentFailure` with a mock payload, return the full failure → retry → link flow.
+> Constraints: readable, industry-grade code.
+
+**Outcome:** ✅
+- `src/failures/handler.js` — the Feature 3 stub is now the real flow: `handlePaymentFailure(payment, {retryDelayMs})` logs `payment_failed`, waits a 2s backoff (`RETRY_DELAY_MS`, overridable for tests/demo), retries once by re-fetching the order and checking `isOrderPaid()` (Razorpay status `paid` / `amount_due === 0`), logs `retry_attempted`, then either logs `payment_captured` (recovered on retry) or falls back to `createPaymentLink()` and returns the link + a user-friendly message. Tolerates an unknown/mock order id (treated as still-unpaid). `isOrderPaid` + `RETRY_DELAY_MS` are exported for Feature 7 unit tests. Renamed the export `handlePaymentFailed` → `handlePaymentFailure` per the spec (only the webhook referenced it).
+- `src/webhooks/handler.js` — `payment.failed` now awaits `handlePaymentFailure(payment)` (the ~2s backoff runs before the ack in test mode, so the whole recovery is audited before we return 200).
+- `server.js` — `GET /simulate-failure` (demo-only): creates a real test order, then runs the flow against a mock `payment.failed` payload so judges see the recovery without a real declined card. Optional `?product_id=` and `?delay=<ms>` (shorten the backoff).
+- `createPaymentLink()` already writes the `link_sent` line, so the handler does not double-log it (one action = one line).
+- Verified LIVE (real Razorpay test mode) via `GET /simulate-failure`: real order `order_TXZqcCC3KiabOI` (₹29,999) → audit sequence exactly `order_created → payment_failed → retry_attempted → link_sent`, a real payment link returned (`https://rzp.io/...`), and a readable message ("Your payment didn't go through — Card declined by the issuing bank (simulated). No need to start over — use this secure payment link to complete your purchase.").
+
+---
+
