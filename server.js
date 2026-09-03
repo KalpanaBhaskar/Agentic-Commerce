@@ -9,6 +9,7 @@ const { loadCatalog } = require('./src/catalog');
 const { createOrder } = require('./src/api/razorpay');
 const { readAudit } = require('./src/audit/logger');
 const webhookRouter = require('./src/webhooks/handler');
+const { processCheckout } = require('./src/agent/checkout');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -85,6 +86,39 @@ app.post('/orders', async (req, res) => {
     }
     console.error('Order creation failed:', err.message);
     return res.status(500).json({ error: 'order_creation_failed', message: err.message });
+  }
+});
+
+// POST /chat — conversational checkout (Feature 4). Body: { message, session_id? }.
+// Claude runs a BOUNDED tool_use loop (search -> order -> upsell -> status) via
+// src/agent/checkout.js; the agent can only act through the four tool schemas.
+// Returns its natural-language reply plus any order_id / payment_link produced.
+app.post('/chat', async (req, res) => {
+  const body = req.body || {};
+  const message = body.message;
+  if (!message || typeof message !== 'string') {
+    return res
+      .status(400)
+      .json({ error: 'invalid_message', message: 'Body must include a non-empty "message" string.' });
+  }
+
+  try {
+    const { response_text, order_id, payment_link, tools_used, session_id } = await processCheckout(
+      message,
+      body.session_id
+    );
+    return res.json({
+      reply: response_text,
+      order_id: order_id ?? null,
+      payment_link: payment_link ?? null,
+      tools_used,
+      session_id,
+    });
+  } catch (err) {
+    console.error('Chat failed:', err.message);
+    // 503 when the agent isn't configured (missing ANTHROPIC_API_KEY); 500 otherwise.
+    const status = err.code === 'AGENT_NOT_CONFIGURED' ? 503 : 500;
+    return res.status(status).json({ error: 'chat_failed', message: err.message });
   }
 });
 
