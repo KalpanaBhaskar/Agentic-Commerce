@@ -7,13 +7,21 @@ require('dotenv').config();
 const express = require('express');
 const { loadCatalog } = require('./src/catalog');
 const { createOrder } = require('./src/api/razorpay');
+const { readAudit } = require('./src/audit/logger');
+const webhookRouter = require('./src/webhooks/handler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// JSON body parsing for future POST routes (/orders, /chat).
-// NOTE: the /webhook route (Feature 3) will need the RAW body for HMAC
-// verification, so it must register its own raw parser before this runs.
+// Feature 3: the /webhook route needs the RAW request body for HMAC signature
+// verification, so it is mounted with its OWN express.raw() parser (inside the
+// router) BEFORE the global express.json() below. For a POST /webhook request
+// this router handles the response, so express.json() never runs on it; for
+// every other path the mount is skipped and express.json() applies as usual.
+// This ordering is load-bearing — do not move express.json() above it.
+app.use('/webhook', webhookRouter);
+
+// JSON body parsing for all other POST routes (/orders, /chat).
 app.use(express.json());
 
 // GET /health — liveness probe. No auth.
@@ -29,6 +37,18 @@ app.get('/catalog', (req, res) => {
   } catch (err) {
     console.error('Failed to load catalog:', err.message);
     res.status(500).json({ error: 'catalog_unavailable' });
+  }
+});
+
+// GET /audit — the audit trail as JSON, newest first. Read-only view over
+// audit.log (JSONL). This is the live, explainable money-action trail judges
+// inspect, and what `npm run audit` will pretty-print as a table (Feature 7).
+app.get('/audit', (req, res) => {
+  try {
+    res.json(readAudit());
+  } catch (err) {
+    console.error('Failed to read audit log:', err.message);
+    res.status(500).json({ error: 'audit_unavailable' });
   }
 });
 
