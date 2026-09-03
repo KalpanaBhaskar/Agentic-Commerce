@@ -57,3 +57,22 @@ _Dates are intentionally omitted._
 - Verified locally: self-signed HMAC payload → 200 + `payment_captured` audit line; tampered body → 400 `invalid_signature`; missing header → 400 `missing_signature`; `GET /audit` returns newest-first JSON.
 
 ---
+
+## Feature 4 — Conversational checkout agent (tool_use)
+- **Branch:** `feat/04-conversational-checkout`
+- **PR:** [#5](https://github.com/KalpanaBhaskar/Agentic-Commerce/pull/5)
+
+**Prompt:**
+> Build the conversational checkout agent.
+> Create: (1) `src/agent/tools.js` — export a `TOOLS` array with the four schemas (`search_catalog {query}`, `create_order {product_id, quantity 1-10}`, `get_upsell_suggestions {product_id}`, `get_order_status {order_id}`) each wired to `searchCatalog` / `createOrder` / `getUpsells` / `fetchOrder`. (2) `src/agent/checkout.js` — export `async processCheckout(userMessage, sessionId)`: call Claude `claude-sonnet-4-6` with tool_use, run an agentic loop until `stop_reason` is `end_turn`, execute each `tool_use` block and feed back a `tool_result`, extract the payment link from the last `create_order`, log `agent_reasoning` for every order-creating call, and return `{response_text, order_id, payment_link, tools_used}`. (3) `POST /chat` route (body `{message, session_id?}`, response `{reply, order_id?, payment_link?, tools_used}`).
+> Constraints: the agent MUST use tool_use (never plain text) to create orders — this is the "bounded and gated" guarantee; `session_id` auto-generated as a UUID when not provided; include the catalog content in the system prompt; tell me 3 test messages to verify all tool paths.
+
+**Outcome:** ✅
+- `src/agent/tools.js` — `TOOLS` (4 schemas matching §7 exactly) + `executeTool(name, input, ctx)` dispatcher; unknown tool name throws (nothing outside the schemas is reachable). `create_order` also mints a payment link (logs `link_sent`).
+- `src/agent/checkout.js` — `processCheckout()` runs the bounded tool_use loop (lazy Anthropic client, model overridable via `ANTHROPIC_MODEL`, `MAX_TURNS` safety bound); embeds the live catalog in the system prompt; threads each turn's natural-language reasoning into the `create_order` audit line; tolerates tool errors by returning them as `tool_result` so Claude can recover.
+- `src/api/razorpay.js` — `createOrder` now accepts optional `agent_reasoning` + `session_id` (backward compatible; `POST /orders` unchanged).
+- `server.js` — `POST /chat`: 400 `invalid_message`; 503 when `ANTHROPIC_API_KEY` is missing; 500 otherwise.
+- Verified with a fake-SDK harness (canned tool_use turns, real Razorpay test mode): all four tools exercised in one multi-turn loop, real order `order_TXQpIUbqSO9Bpu` + payment link created, `order_id`/`payment_link` extracted, and the `order_created` audit line carried the agent's reasoning + `session_id`. HTTP: `/chat {}` → 400; `/chat {message}` with the placeholder key → 500 `chat_failed` (`401 UNAUTHENTICATED`) — a real `ANTHROPIC_API_KEY` is required for the live Claude call.
+
+---
+

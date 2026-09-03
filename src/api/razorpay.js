@@ -41,11 +41,15 @@ function initRazorpay() {
  *
  * @param {object}  args
  * @param {string}  args.product_id
- * @param {number}  args.quantity     integer 1..10
+ * @param {number}  args.quantity          integer 1..10
+ * @param {string}  [args.agent_reasoning] why this order was created (from the
+ *                                          checkout agent); falls back to a
+ *                                          generated description. Logged in audit.
+ * @param {string}  [args.session_id]      conversation/session id, logged in audit
  * @returns {Promise<{order_id:string, amount_paise:number, currency:string, product:object, receipt:string}>}
  * @throws {Error} err.code = 'INVALID_QUANTITY' | 'PRODUCT_NOT_FOUND' | 'RAZORPAY_ERROR'
  */
-async function createOrder({ product_id, quantity } = {}) {
+async function createOrder({ product_id, quantity, agent_reasoning, session_id } = {}) {
   // 1. Validate quantity — bounded 1..10 (mirrors the create_order tool schema, §7).
   const qty = Number(quantity);
   if (!Number.isInteger(qty) || qty < 1 || qty > 10) {
@@ -101,7 +105,10 @@ async function createOrder({ product_id, quantity } = {}) {
     currency,
     product_id: product.id,
     status: 'success',
-    agent_reasoning: `Created Razorpay order for ${qty} x "${product.name}" (${product.id}) = ${amount_paise} paise.`,
+    agent_reasoning:
+      agent_reasoning ||
+      `Created Razorpay order for ${qty} x "${product.name}" (${product.id}) = ${amount_paise} paise.`,
+    session_id: session_id ?? null,
   });
 
   return { order_id: order.id, amount_paise, currency, product, receipt };
