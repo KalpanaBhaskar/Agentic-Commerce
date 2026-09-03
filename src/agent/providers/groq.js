@@ -55,9 +55,14 @@ async function callModel({ system, tools, messages }) {
     max_tokens: MAX_TOKENS,
     // OpenAI-style: system is the first message (Anthropic passes it separately).
     messages: [{ role: 'system', content: system }, ...messages],
-    tools,
-    tool_choice: 'auto',
   };
+  // Only advertise tools when there are some — this lets the same method serve
+  // plain completions (e.g. the upsell pitch) as well as the tool-use loop.
+  // (Sending tool_choice:'auto' with an empty tools list is rejected.)
+  if (Array.isArray(tools) && tools.length > 0) {
+    body.tools = tools;
+    body.tool_choice = 'auto';
+  }
 
   const resp = await fetch(GROQ_URL, {
     method: 'POST',

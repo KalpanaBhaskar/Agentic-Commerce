@@ -81,3 +81,24 @@ _Dates are intentionally omitted._
 
 ---
 
+## Feature 5 — Upsell agent (LLM reasoning + audit)
+- **Branch:** `feat/05-upsell-agent`
+- **PR:** [#6](https://github.com/KalpanaBhaskar/Agentic-Commerce/pull/6)
+
+**Prompt:**
+> Build the upsell agent.
+> Create: (1) `src/agent/upsell.js` — export `async generateUpsellPitch(product, upsellProducts)` that calls the LLM to write a 1-2 sentence upsell message which names the add-on naturally, gives a reason ("customers who buy X often add Y because..."), and ends with a question ("Want to add it for ₹X?"); returns `{pitch, reasoning}`. (2) Modify `src/agent/checkout.js`: after a `create_order` tool call succeeds, fetch the ordered product's upsells; if any exist, call `generateUpsellPitch`, append the pitch to the reply, and log `upsell_shown` to audit with the pitch's `reasoning` as `agent_reasoning`. (3) Modify `POST /chat` response to include `{reply, order_id, payment_link, upsell_shown, upsell_products}`.
+> Constraints: readable, industry-grade code.
+
+**Outcome:** ✅
+- `src/agent/upsell.js` — `generateUpsellPitch(product, upsellProducts)` (caps at `MAX_UPSELLS = 2`): builds a JSON-only prompt (name the add-on, give a reason, end with a ₹-priced question), parses the model's `{pitch, reasoning}`, and falls back to a deterministic pitch/reasoning if the LLM is unavailable or returns malformed JSON — so checkout never breaks. Provider-agnostic (reuses the Feature 4 abstraction; runs on Groq for testing, Claude for prod).
+- `src/agent/checkout.js` — after an order exists, the upsell is handled as ORCHESTRATION (not model discretion): look up the ordered product's add-ons, and if any exist, generate the pitch, append it to the reply, and write exactly one `upsell_shown` audit line carrying the pitch's own reasoning. The system prompt now tells the agent NOT to self-upsell post-order (single upsell voice); `get_upsell_suggestions` remains for pre-purchase "what pairs with X?" questions.
+- Both providers gained tool-less `callModel` support (omit `tools`/`tool_choice` when the tools list is empty) so the same interface also serves the plain-completion pitch.
+- `server.js` — `POST /chat` now returns `upsell_shown` + `upsell_products` (id / name / price_paise / price_inr).
+- Verified LIVE (real Groq `openai/gpt-oss-20b` + real Razorpay test mode):
+  - **Positive** ("I want Sony noise-cancelling headphones"): real order `order_TXYv1y2rJusgTF` + payment link, `upsell_shown:true`, `upsell_products` = [Hard-Shell Carry Case ₹1,999, USB-C Fast-Charge Cable ₹799], pitch appended to the reply, and one `upsell_shown` audit line with a genuine `agent_reasoning`. `tools_used` = `search_catalog, create_order` (the agent did NOT self-upsell — the prompt guard held).
+  - **Negative** ("Do you sell gaming laptops?"): no order → `upsell_shown:false`, empty `upsell_products`, no new `upsell_shown` audit line, graceful "we don't carry that" reply.
+  - This also confirms the live Groq path end-to-end (the Feature 4 note's "pending a free `GROQ_API_KEY`" is now done).
+
+---
+
