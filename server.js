@@ -10,6 +10,7 @@ const { createOrder } = require('./src/api/razorpay');
 const { readAudit } = require('./src/audit/logger');
 const webhookRouter = require('./src/webhooks/handler');
 const { processCheckout } = require('./src/agent/checkout');
+const { handlePaymentFailure } = require('./src/failures/handler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -127,6 +128,62 @@ app.post('/chat', async (req, res) => {
     // 503 when the agent isn't configured (missing ANTHROPIC_API_KEY); 500 otherwise.
     const status = err.code === 'AGENT_NOT_CONFIGURED' ? 503 : 500;
     return res.status(status).json({ error: 'chat_failed', message: err.message });
+  }
+});
+
+// GET /simulate-failure — DEMO ONLY. Judges can watch the graceful-failure flow
+// end-to-end without needing a real declined card: we create a real test order,
+// then run handlePaymentFailure() against a MOCK payment.failed payload for it.
+// The audit trail gains order_created -> payment_failed -> retry_attempted ->
+// link_sent, and the response returns the recovery result (payment link + a
+// user-friendly message). Optional query params: ?product_id=prod_00X and
+// ?delay=<ms> (shorten the 2s retry backoff for a snappier demo).
+app.get('/simulate-failure', async (req, res) => {
+  const product_id = req.query.product_id || 'prod_001';
+  const rawDelay = req.query.delay;
+  const options =
+    rawDelay !== undefined && Number.isFinite(Number(rawDelay))
+      ? { retryDelayMs: Number(rawDelay) }
+      : {};
+
+  try {
+    // 1. Create a real Razorpay test order so we have a genuine order_id + amount.
+    const { order_id, amount_paise, currency } = await createOrder({
+      product_id,
+      quantity: 1,
+      agent_reasoning: 'Demo: created an order to simulate a payment failure and recovery.',
+      session_id: 'sim_failure',
+    });
+
+    // 2. Mock the payment entity Razorpay would send on a payment.failed webhook.
+    const mockPayment = {
+      id: `pay_SIM_${Date.now()}`,
+      order_id,
+      amount: amount_paise,
+      currency,
+      status: 'failed',
+      error_code: 'BAD_REQUEST_ERROR',
+      error_description: 'Card declined by the issuing bank (simulated).',
+    };
+
+    // 3. Run the real graceful-failure flow (log -> backoff -> retry -> link).
+    const result = await handlePaymentFailure(mockPayment, options);
+
+    return res.json({
+      simulated: true,
+      order_id,
+      amount_paise,
+      amount_inr: amount_paise / 100,
+      currency,
+      mock_error: mockPayment.error_description,
+      ...result,
+    });
+  } catch (err) {
+    if (err.code === 'PRODUCT_NOT_FOUND' || err.code === 'INVALID_QUANTITY') {
+      return res.status(400).json({ error: err.code.toLowerCase(), message: err.message });
+    }
+    console.error('Simulate-failure flow failed:', err.message);
+    return res.status(500).json({ error: 'simulate_failure_failed', message: err.message });
   }
 });
 

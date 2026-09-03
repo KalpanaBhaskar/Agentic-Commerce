@@ -14,7 +14,7 @@ const express = require('express');
 const Razorpay = require('razorpay');
 
 const { capturePayment } = require('../api/razorpay');
-const { handlePaymentFailed } = require('../failures/handler');
+const { handlePaymentFailure } = require('../failures/handler');
 const { logAction } = require('../audit/logger');
 
 const router = express.Router();
@@ -87,8 +87,10 @@ router.post('/', rawBody, async (req, res) => {
         await onPaymentCaptured(payment);
         break;
       case 'payment.failed':
-        // Feature 6 expands this; the current stub logs payment_failed.
-        await handlePaymentFailed(payment);
+        // Feature 6: log the failure, back off + retry once, then fall back to
+        // a payment link if still unpaid. We await so the whole recovery flow is
+        // audited before we ack (adds the ~2s backoff to this request in test mode).
+        await handlePaymentFailure(payment);
         break;
       default:
         console.log(`[webhook] no handler for event=${eventType}; acking.`);
