@@ -9,7 +9,10 @@
 // the wire format differs (OpenAI-style tools / tool_calls / role:"tool").
 
 const GROQ_URL = process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+// gpt-oss-20b is a strong OpenAI-compatible tool-caller that stays well under
+// Groq's free-tier 8000 TPM budget (a full checkout ≈ 5k tokens). Override with
+// GROQ_MODEL (e.g. openai/gpt-oss-120b for stronger reasoning at higher cost).
+const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
 const MAX_TOKENS = 1024;
 
 function getKey() {
@@ -71,6 +74,11 @@ async function callModel({ system, tools, messages }) {
   }
 
   const data = await resp.json();
+  if (process.env.GROQ_DEBUG && data.usage) {
+    // Per-turn token accounting — handy for staying under free-tier TPM limits.
+    const u = data.usage;
+    console.error(`[groq] ${MODEL} usage prompt=${u.prompt_tokens} completion=${u.completion_tokens} total=${u.total_tokens}`);
+  }
   const choice = (data.choices && data.choices[0]) || {};
   const msg = choice.message || {};
   const text = (msg.content || '').trim();

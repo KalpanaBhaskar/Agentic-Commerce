@@ -17,28 +17,40 @@ const { getProvider } = require('./providers');
 
 const MAX_TURNS = 8; // safety bound on the agentic loop
 
-// Base persona + operating rules (CLAUDE.md §4). The live catalog is embedded so
-// the model has product context without a tool call, but it must STILL call
-// create_order to actually place an order.
+// Base persona + operating rules (CLAUDE.md §4). We embed a SLIM catalog index
+// (no long descriptions, no ids) so the model has product context cheaply but
+// must still call search_catalog to resolve a product's id before ordering —
+// which keeps the "bounded tool use" flow genuine and the prompt small enough
+// for tight free-tier token budgets.
 function buildSystemPrompt() {
-  const catalog = JSON.stringify(loadCatalog(), null, 2);
+  const index = loadCatalog()
+    .map((p) => {
+      const rupees = Math.round(p.price_paise / 100).toLocaleString('en-IN');
+      const tags = Array.isArray(p.tags) ? p.tags.join(', ') : '';
+      return `- ${p.name} | ₹${rupees} | ${p.category} | ${tags}`;
+    })
+    .join('\n');
   return [
     'You are RazorAgent, an AI commerce assistant for a merchant. Help customers ' +
-      'find and purchase products. When a customer wants to buy something, search ' +
-      'the catalog, suggest the right product, and create an order. Always explain ' +
-      "what you're doing. After creating an order, check for upsell opportunities.",
+      'find and purchase products. When a customer wants to buy something, look it ' +
+      "up, create the order, and suggest add-ons. Always briefly explain what you're doing.",
     '',
     'You may act ONLY through your tools (search_catalog, create_order, ' +
       'get_upsell_suggestions, get_order_status). Never claim to have placed an ' +
       'order or looked up a status without calling the matching tool.',
     '',
-    'All money is in paise (1 rupee = 100 paise). When you show a price to the ' +
-      'customer, convert to rupees (₹) so it is readable. Keep replies concise.',
+    'Order flow: call search_catalog to find the product and its id, then call ' +
+      'create_order with that product_id. When the customer clearly wants to buy, ' +
+      'proceed and create the order right away — default quantity to 1 if they did ' +
+      'not specify one (do not stop to ask). After creating an order, call ' +
+      'get_upsell_suggestions for that product and briefly mention any add-ons.',
     '',
-    'Here is the current merchant catalog for reference — you may answer questions ' +
-      'from it directly, but you must still call create_order to place an order:',
+    'All money is in paise (1 rupee = 100 paise). Show prices to the customer in ' +
+      'rupees (₹). Keep replies concise.',
+    '',
+    'Products this merchant sells (call search_catalog for full details + ids):',
     '<catalog>',
-    catalog,
+    index,
     '</catalog>',
   ].join('\n');
 }
