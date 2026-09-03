@@ -74,5 +74,10 @@ _Dates are intentionally omitted._
 - `server.js` — `POST /chat`: 400 `invalid_message`; 503 when `ANTHROPIC_API_KEY` is missing; 500 otherwise.
 - Verified with a fake-SDK harness (canned tool_use turns, real Razorpay test mode): all four tools exercised in one multi-turn loop, real order `order_TXQpIUbqSO9Bpu` + payment link created, `order_id`/`payment_link` extracted, and the `order_created` audit line carried the agent's reasoning + `session_id`. HTTP: `/chat {}` → 400; `/chat {message}` with the placeholder key → 500 `chat_failed` (`401 UNAUTHENTICATED`) — a real `ANTHROPIC_API_KEY` is required for the live Claude call.
 
+**Update — pluggable LLM provider (free-tier testing):**
+- The live Anthropic key available for this sprint is identity-linked and carries **$0 API credits** (the Anthropic API has no free tier — it is prepaid), and the workstation's shell `ANTHROPIC_BASE_URL` routes SDK calls through a third-party proxy. Both block a real Claude `tool_use` call during testing. Code is provably correct (fake-SDK harness above); the blocker is purely the account/credits/environment.
+- Refactored the agent to a **provider abstraction** (`src/agent/providers/`): a neutral interface (`formatTools` / `initMessages` / `callModel` / `formatToolResults`) that `checkout.js`'s bounded loop drives unchanged. `LLM_PROVIDER=anthropic` (default, production) or `groq` (free, OpenAI-compatible Llama, for testing/demo). The four tool schemas, the bounded loop, and the audit trail are **identical** across providers — the "agent can only act through its tools" guarantee (§0) holds either way.
+- Verified the Groq path with a fake-`fetch` harness (canned OpenAI-format `chat/completions`, real Razorpay test mode): full `search_catalog → get_upsell_suggestions → create_order → get_order_status` loop, real order `order_TXY1JuXPrweKTd` + payment link, `finish_reason` looping/stopping correct, `order_created` audit line carried the reasoning + `session_id`. Live Groq run pending a free `GROQ_API_KEY`.
+
 ---
 
