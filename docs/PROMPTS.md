@@ -141,3 +141,72 @@ _Dates are intentionally omitted._
 
 ---
 
+## Feature 8 — README and demo documentation
+- **Branch:** `feat/08-docs-readme`
+- **PR:** #9 (to be opened)
+
+**Prompt:**
+> Merge PR 8 (feat/07-audit-tests) to main, then create feature branch feat/08-docs-readme.
+> Create the following files exactly as specified. Do not modify any existing src/ files.
+> 
+> FILE 1: README.md (project root)
+> Include these sections in this order:
+> 1. Project name + one-line description
+> 2. "Why now" paragraph (mention ACP, NPCI UAP, agent-to-agent commerce — 3 sentences max)
+> 3. Architecture section with ASCII diagram showing:
+>    Buyer → POST /chat → Claude Agent (tool_use) → [search_catalog | create_order | get_upsells] → Razorpay API → audit.log
+> 4. Feature table: 6 rows, columns: Feature | Endpoint | What it does
+> 5. Setup instructions:
+>    a. Clone repo
+>    b. npm install
+>    c. Copy .env.example to .env and fill in values (explain where to get each)
+>    d. npm run dev
+>    e. ngrok http 3000 (separate terminal)
+>    f. Set webhook URL in Razorpay dashboard
+> 6. API reference table: Method | Endpoint | Body | Response — for all routes
+> 7. Test commands: exact curl commands for every endpoint
+> 8. Audit trail section: paste example audit.log output (fabricate realistic sample data)
+> 9. Tech stack table: Layer | Choice | Why
+> 10. Judging criteria checklist: show how the project meets each of the 4 bar requirements
+> 
+> FILE 2: docs/DEMO_SCRIPT.md
+> A step-by-step guide for the 5-minute pitch video with:
+> - Exact terminal commands to run at each step
+> - What to say (1-2 sentences per step)
+> - Expected output to show
+> - Fallback if something breaks (e.g. use /simulate-failure if webhook doesn't fire)
+> 8 steps total matching the pitch video outline.
+> 
+> FILE 3: docs/ARCHITECTURE.md
+> Explain every architectural decision and why:
+> - Why tool_use instead of plain LLM responses for checkout
+> - Why flat files instead of a database
+> - Why raw body must be preserved for webhook verification
+> - Why amounts must always be in paise
+> - How the audit trail enforces "explainable and bounded"
+> 
+> FILE 4: .env.example (update if it exists, create if not)
+> RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
+> RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
+> WEBHOOK_SECRET=your_webhook_signing_secret
+> ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxx
+> PORT=3000
+> NGROK_URL=https://xxxx.ngrok.io
+> 
+> COMMIT MESSAGE: docs: README, demo script, architecture docs
+> PR TITLE: docs: complete project documentation
+> PR DESCRIPTION: Adds README with setup instructions, demo script for pitch video, architecture decisions doc, and updated .env.example. No code changes.
+
+**Outcome:** ✅
+- Successfully merged PR 8 (feat/07-audit-tests) to main branch
+- Created feature branch `feat/08-docs-readme`
+- **README.md**: Complete documentation with project description, ACP/NPCI UAP context, ASCII architecture diagram, feature table, detailed setup instructions, API reference, test commands, audit trail example, tech stack table, and judging criteria checklist
+- **docs/DEMO_SCRIPT.md**: 8-step demo walkthrough with exact commands, judge-facing scripts, expected outputs, and backup procedures for each step
+- **docs/ARCHITECTURE.md**: Comprehensive architectural decisions document explaining tool_use vs plain LLM, flat files vs database, raw body preservation, paise amounts, audit trail enforcement, Express 4 choice, Node.js 20 LTS, Anthropic SDK, Jest testing, environment variables, skills directory, and ngrok usage
+- **.env.example**: Updated to clean, minimal template with 6 required variables and clear comments on where to obtain each value
+- **docs/PROMPTS.md**: Updated with this session's prompt and outcome
+- All documentation follows the specified format and addresses the judging criteria (explainable, bounded, audit trail, graceful failure)
+- No source code files were modified — pure documentation feature
+
+---
+
