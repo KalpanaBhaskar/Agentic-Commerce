@@ -5,6 +5,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const path = require('path');
 const { loadCatalog } = require('./src/catalog');
 const { createOrder } = require('./src/api/razorpay');
 const { readAudit } = require('./src/audit/logger');
@@ -113,6 +114,7 @@ app.post('/chat', async (req, res) => {
       session_id,
       upsell_shown,
       upsell_products,
+      product_image,
     } = await processCheckout(message, body.session_id);
     return res.json({
       reply: response_text,
@@ -122,6 +124,7 @@ app.post('/chat', async (req, res) => {
       upsell_products,
       tools_used,
       session_id,
+      product_image,
     });
   } catch (err) {
     console.error('Chat failed:', err.message);
@@ -186,6 +189,14 @@ app.get('/simulate-failure', async (req, res) => {
     return res.status(500).json({ error: 'simulate_failure_failed', message: err.message });
   }
 });
+
+// Feature 9: Serve React app in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'client/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/dist/index.html'));
+  });
+}
 
 // Only start listening when run directly (not when imported by tests).
 if (require.main === module) {
