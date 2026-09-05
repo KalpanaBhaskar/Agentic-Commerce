@@ -7,13 +7,19 @@ const DashboardPage = ({ onBackToHome }) => {
 
   useEffect(() => {
     fetch('/api/audit')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
         setAuditData(data);
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load audit data');
+        console.error('Audit fetch error:', err);
+        setError('Failed to load audit data: ' + err.message);
         setLoading(false);
       });
   }, []);

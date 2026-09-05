@@ -7,13 +7,19 @@ const CatalogPage = ({ onBackToHome }) => {
 
   useEffect(() => {
     fetch('/api/catalog')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
         setProducts(data);
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load catalog');
+        console.error('Catalog fetch error:', err);
+        setError('Failed to load catalog: ' + err.message);
         setLoading(false);
       });
   }, []);
