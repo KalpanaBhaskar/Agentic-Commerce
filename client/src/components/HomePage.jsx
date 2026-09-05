@@ -1,49 +1,50 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
-const HomePage = ({ onStartChat, onNavigateToCatalog, onNavigateToDashboard }) => {
+const HomePage = () => {
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
     <div className="min-h-screen dark">
-      <div className="min-h-screen bg-[#121212] text-[#E0E0E0]">
-        {/* Header */}
-        <header className="border-b border-gray-700 px-6 py-4">
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[#4FC3F7]">RazorAgent</h1>
-            <nav>
-              <ul className="flex space-x-6">
-                <li>
-                  <button 
-                    onClick={onStartChat}
-                    className="text-[#4FC3F7] hover:underline font-medium"
-                  >
-                    Start Shopping
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={onNavigateToCatalog}
-                    className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
-                  >
-                    View Catalog
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={onNavigateToDashboard}
-                    className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
-                  >
-                    Merchant Dashboard
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </header>
+      {/* Header */}
+      <header className="border-b border-gray-700 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-[#4FC3F7]">RazorAgent</h1>
+          <nav>
+            <ul className="flex space-x-6">
+              <li>
+                <Link 
+                  to="/chat"
+                  className="text-[#4FC3F7] hover:underline font-medium"
+                >
+                  Start Shopping
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/catalog"
+                  className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
+                >
+                  View Catalog
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/dashboard"
+                  className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
+                >
+                  Merchant Dashboard
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </header>
 
-        {/* Main Content */}
+      {/* Main Content */}
+      <div className="min-h-screen bg-[#121212] text-[#E0E0E0]">
+        {/* Hero Section */}
         <main className="max-w-7xl mx-auto px-6 py-12">
-          {/* Hero Section */}
           <section className="mb-12">
             <div className="border border-gray-700 p-8">
               <h2 className="text-4xl font-bold mb-4">AI-Powered Shopping Assistant</h2>
@@ -52,12 +53,12 @@ const HomePage = ({ onStartChat, onNavigateToCatalog, onNavigateToDashboard }) =
                 compare options, and complete purchases using natural conversation. No complex forms, no endless 
                 scrolling—just tell us what you need.
               </p>
-              <button 
-                onClick={onStartChat}
-                className="px-6 py-3 bg-[#4FC3F7] text-black font-medium rounded hover:bg-[#29B6F6] transition-colors"
+              <Link 
+                to="/chat"
+                className="inline-block px-6 py-3 bg-[#4FC3F7] text-black font-medium rounded hover:bg-[#29B6F6] transition-colors"
               >
                 Start Shopping Now
-              </button>
+              </Link>
             </div>
           </section>
 
@@ -96,23 +97,23 @@ const HomePage = ({ onStartChat, onNavigateToCatalog, onNavigateToDashboard }) =
               <div className="border border-gray-700 p-6 hover:border-[#4FC3F7] transition-colors cursor-pointer">
                 <h4 className="text-xl font-semibold mb-2">Electronics</h4>
                 <p className="text-sm mb-3">Headphones, keyboards, mice, and more</p>
-                <button onClick={() => onStartChat('electronics')} className="text-[#4FC3F7] hover:underline text-sm">
+                <Link to="/chat" className="text-[#4FC3F7] hover:underline text-sm">
                   Browse Electronics →
-                </button>
+                </Link>
               </div>
               <div className="border border-gray-700 p-6 hover:border-[#4FC3F7] transition-colors cursor-pointer">
                 <h4 className="text-xl font-semibold mb-2">Accessories</h4>
                 <p className="text-sm mb-3">Cases, cables, desk mats, and essentials</p>
-                <button onClick={() => onStartChat('accessories')} className="text-[#4FC3F7] hover:underline text-sm">
+                <Link to="/chat" className="text-[#4FC3F7] hover:underline text-sm">
                   Browse Accessories →
-                </button>
+                </Link>
               </div>
               <div className="border border-gray-700 p-6 hover:border-[#4FC3F7] transition-colors cursor-pointer">
                 <h4 className="text-xl font-semibold mb-2">Apparel</h4>
                 <p className="text-sm mb-3">T-shirts, hoodies, caps, and more</p>
-                <button onClick={() => onStartChat('apparel')} className="text-[#4FC3F7] hover:underline text-sm">
+                <Link to="/chat" className="text-[#4FC3F7] hover:underline text-sm">
                   Browse Apparel →
-                </button>
+                </Link>
               </div>
             </div>
           </section>
@@ -146,14 +147,14 @@ const HomePage = ({ onStartChat, onNavigateToCatalog, onNavigateToDashboard }) =
                 </div>
               </div>
               <div className="mt-6 relative inline-block">
-                <button 
-                  onClick={onNavigateToCatalog}
+                <Link 
+                  to="/catalog"
                   className="inline-block px-4 py-2 border border-[#4FC3F7] text-[#4FC3F7] hover:bg-[#4FC3F7] hover:text-black transition-colors text-sm"
                   onMouseEnter={() => setShowTooltip(true)}
                   onMouseLeave={() => setShowTooltip(false)}
                 >
                   View API Documentation
-                </button>
+                </Link>
                 {showTooltip && (
                   <div className="absolute bottom-full left-0 mb-2 px-3 py-1 bg-gray-800 text-gray-300 text-xs rounded whitespace-nowrap">
                     API Documentation (To be updated...)
@@ -177,8 +178,8 @@ const HomePage = ({ onStartChat, onNavigateToCatalog, onNavigateToDashboard }) =
               <div>
                 <h4 className="font-semibold mb-4">Quick Links</h4>
                 <ul className="space-y-2 text-sm">
-                  <li><button onClick={onNavigateToCatalog} className="hover:underline">Product Catalog</button></li>
-                  <li><button onClick={onNavigateToDashboard} className="hover:underline">Merchant Dashboard</button></li>
+                  <li><Link to="/catalog" className="hover:underline">Product Catalog</Link></li>
+                  <li><Link to="/dashboard" className="hover:underline">Merchant Dashboard</Link></li>
                   <li><span className="text-gray-500">Audit Trail (Coming Soon)</span></li>
                 </ul>
               </div>

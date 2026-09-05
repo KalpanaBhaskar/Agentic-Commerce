@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
-const CatalogPage = ({ onBackToHome }) => {
+const CatalogPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,12 +34,12 @@ const CatalogPage = ({ onBackToHome }) => {
       <div className="min-h-screen bg-[#121212] text-[#E0E0E0]">
         <header className="border-b border-gray-700 px-6 py-4">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <button 
-              onClick={onBackToHome}
+            <Link 
+              to="/"
               className="text-[#4FC3F7] hover:underline font-medium"
             >
               ← Back to Home
-            </button>
+            </Link>
             <h1 className="text-xl font-bold text-[#4FC3F7]">Product Catalog</h1>
           </div>
         </header>
@@ -54,12 +55,12 @@ const CatalogPage = ({ onBackToHome }) => {
       <div className="min-h-screen bg-[#121212] text-[#E0E0E0]">
         <header className="border-b border-gray-700 px-6 py-4">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <button 
-              onClick={onBackToHome}
+            <Link 
+              to="/"
               className="text-[#4FC3F7] hover:underline font-medium"
             >
               ← Back to Home
-            </button>
+            </Link>
             <h1 className="text-xl font-bold text-[#4FC3F7]">Product Catalog</h1>
           </div>
         </header>
@@ -77,12 +78,12 @@ const CatalogPage = ({ onBackToHome }) => {
       {/* Header */}
       <header className="border-b border-gray-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <button 
-            onClick={onBackToHome}
+          <Link 
+            to="/"
             className="text-[#4FC3F7] hover:underline font-medium"
           >
             ← Back to Home
-          </button>
+          </Link>
           <h1 className="text-xl font-bold text-[#4FC3F7]">Product Catalog</h1>
         </div>
       </header>

@@ -123,7 +123,7 @@ const Dashboard = () => {
             to="/"
             className="text-[#4FC3F7] hover:underline font-medium"
           >
-            ← Buyer Chat
+            ← Back to Home
           </Link>
         </div>
       </header>

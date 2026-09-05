@@ -85,16 +85,30 @@ const ChatWidget = () => {
       <header className="border-b border-gray-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
+            <Link 
+              to="/"
+              className="text-[#4FC3F7] hover:underline font-medium"
+            >
+              ← Back to Home
+            </Link>
             <h1 className="text-xl font-bold text-[#4FC3F7]">RazorAgent Chat</h1>
           </div>
           <nav>
             <ul className="flex space-x-6">
               <li>
                 <Link 
+                  to="/catalog"
+                  className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
+                >
+                  Catalog
+                </Link>
+              </li>
+              <li>
+                <Link 
                   to="/dashboard"
                   className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
                 >
-                  Merchant Dashboard →
+                  Dashboard
                 </Link>
               </li>
             </ul>
