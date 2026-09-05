@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
-const ChatWidget = ({ onBackToHome, initialCategory, onNavigateToCatalog, onNavigateToDashboard }) => {
+const ChatWidget = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -13,11 +14,7 @@ const ChatWidget = ({ onBackToHome, initialCategory, onNavigateToCatalog, onNavi
 
   useEffect(() => {
     scrollToBottom();
-    // Pre-fill input if category is provided
-    if (initialCategory) {
-      setInput(`I'm looking for ${initialCategory}`);
-    }
-  }, [messages, initialCategory]);
+  }, [messages]);
 
   const generateSessionId = () => {
     return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -88,31 +85,17 @@ const ChatWidget = ({ onBackToHome, initialCategory, onNavigateToCatalog, onNavi
       <header className="border-b border-gray-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={onBackToHome}
-              className="text-[#4FC3F7] hover:underline font-medium"
-            >
-              ← Back to Home
-            </button>
             <h1 className="text-xl font-bold text-[#4FC3F7]">RazorAgent Chat</h1>
           </div>
           <nav>
             <ul className="flex space-x-6">
               <li>
-                <button 
-                  onClick={onNavigateToCatalog}
+                <Link 
+                  to="/dashboard"
                   className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
                 >
-                  Catalog
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={onNavigateToDashboard}
-                  className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
-                >
-                  Dashboard
-                </button>
+                  Merchant Dashboard →
+                </Link>
               </li>
             </ul>
           </nav>
