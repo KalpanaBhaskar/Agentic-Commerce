@@ -1,14 +1,14 @@
 // src/webhooks/handler.js — Razorpay webhook receiver (Feature 3).
 //
-// Mounted at POST /webhook. This is the ONE route that must see the RAW request
-// body: Razorpay signs the exact bytes it sends, so we verify HMAC-SHA256 over
-// the raw buffer BEFORE any JSON parsing. server.js mounts this router ahead of
-// the global express.json() for exactly that reason.
-//
-// Flow: raw body -> verify signature -> parse event -> dispatch -> respond.
-//   - missing/invalid signature    -> 400 (tells us the endpoint is misconfigured
-//                                          or someone is spoofing; Razorpay will retry)
-//   - valid, even if a handler fails-> 200 (so Razorpay does NOT retry a handled event)
+ // Mounted at POST /webhook. This is the ONE route that must see the RAW request
+ // body: Razorpay signs the exact bytes it sends, so we verify HMAC-SHA256 over
+ // the raw buffer BEFORE any JSON parsing. server.js mounts this router ahead of
+ // the global express.json() for exactly that reason.
+ //
+ // Flow: raw body -> verify signature -> parse event -> dispatch -> respond.
+ //   - missing/invalid signature    -> 400 (tells us the endpoint is misconfigured
+ //                                          or someone is spoofing; Razorpay will retry)
+ //   - valid, even if a handler fails-> 200 (so Razorpay does NOT retry a handled event)
 
 const express = require('express');
 const Razorpay = require('razorpay');
