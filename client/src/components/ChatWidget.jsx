@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
+const ChatWidget = ({ onBackToHome, initialCategory, onNavigateToCatalog, onNavigateToDashboard }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -13,7 +13,11 @@ const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+    // Pre-fill input if category is provided
+    if (initialCategory) {
+      setInput(`I'm looking for ${initialCategory}`);
+    }
+  }, [messages, initialCategory]);
 
   const generateSessionId = () => {
     return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -79,44 +83,35 @@ const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-[#121212] text-gray-900 dark:text-[#E0E0E0] transition-colors">
+    <div className="flex flex-col h-screen bg-[#121212] text-[#E0E0E0]">
       {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+      <header className="border-b border-gray-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button 
               onClick={onBackToHome}
-              className="text-[#2B6CB0] dark:text-[#4FC3F7] hover:underline font-medium"
+              className="text-[#4FC3F7] hover:underline font-medium"
             >
               ← Back to Home
             </button>
-            <h1 className="text-xl font-bold text-[#2B6CB0] dark:text-[#4FC3F7]">RazorAgent Chat</h1>
+            <h1 className="text-xl font-bold text-[#4FC3F7]">RazorAgent Chat</h1>
           </div>
           <nav>
             <ul className="flex space-x-6">
               <li>
-                <a 
-                  href="/catalog" 
-                  className="text-gray-600 dark:text-gray-400 hover:text-[#2B6CB0] dark:hover:text-[#4FC3F7] hover:underline"
+                <button 
+                  onClick={onNavigateToCatalog}
+                  className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
                 >
                   Catalog
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="/dashboard" 
-                  className="text-gray-600 dark:text-gray-400 hover:text-[#2B6CB0] dark:hover:text-[#4FC3F7] hover:underline"
-                >
-                  Dashboard
-                </a>
+                </button>
               </li>
               <li>
                 <button 
-                  onClick={toggleDarkMode}
-                  className="text-gray-600 dark:text-gray-400 hover:text-[#2B6CB0] dark:hover:text-[#4FC3F7] hover:underline"
-                  aria-label="Toggle dark mode"
+                  onClick={onNavigateToDashboard}
+                  className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
                 >
-                  {darkMode ? '☀️ Light' : '🌙 Dark'}
+                  Dashboard
                 </button>
               </li>
             </ul>
@@ -127,7 +122,7 @@ const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
+          <div className="text-center text-gray-400 mt-8">
             <p className="text-lg">Welcome to RazorAgent!</p>
             <p className="text-sm mt-2">Type a message to start shopping with AI assistance.</p>
           </div>
@@ -141,9 +136,9 @@ const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
             <div
               className={`max-w-[70%] rounded-lg p-4 border ${
                 msg.type === 'user'
-                  ? 'bg-[#2B6CB0] dark:bg-[#4FC3F7] text-white dark:text-black border-[#2B6CB0] dark:border-[#4FC3F7]'
-                  : 'bg-gray-50 dark:bg-[#1E1E1E] text-gray-900 dark:text-[#E0E0E0] border-gray-200 dark:border-gray-700'
-              } ${msg.upsell_shown ? 'border-2 border-amber-400 dark:border-amber-500' : ''}`}
+                  ? 'bg-[#4FC3F7] text-black border-[#4FC3F7]'
+                  : 'bg-[#1E1E1E] text-[#E0E0E0] border-gray-700'
+              } ${msg.upsell_shown ? 'border-2 border-amber-500' : ''}`}
             >
               <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
               
@@ -151,7 +146,7 @@ const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
                 <img 
                   src={msg.product_image} 
                   alt="Product" 
-                  className="mt-3 rounded border border-gray-200 dark:border-gray-600 max-w-full h-auto"
+                  className="mt-3 rounded border border-gray-600 max-w-full h-auto"
                   style={{ maxHeight: '200px' }}
                 />
               )}
@@ -161,7 +156,7 @@ const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
                   href={msg.payment_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mt-3 px-4 py-2 bg-green-600 dark:bg-green-500 text-white dark:text-black rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors text-sm font-medium"
+                  className="inline-block mt-3 px-4 py-2 bg-green-500 text-black rounded hover:bg-green-600 transition-colors text-sm font-medium"
                 >
                   Pay Now →
                 </a>
@@ -178,7 +173,7 @@ const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-50 dark:bg-[#1E1E1E] text-gray-900 dark:text-[#E0E0E0] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <div className="bg-[#1E1E1E] text-[#E0E0E0] rounded-lg p-4 border border-gray-700">
               <p className="text-sm">RazorAgent is thinking...</p>
             </div>
           </div>
@@ -188,7 +183,7 @@ const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-white dark:bg-[#121212]">
+      <div className="border-t border-gray-700 p-6 bg-[#121212]">
         <div className="max-w-7xl mx-auto flex gap-4">
           <input
             type="text"
@@ -196,13 +191,13 @@ const ChatWidget = ({ onBackToHome, darkMode, toggleDarkMode }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
-            className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 bg-white dark:bg-[#1E1E1E] text-gray-900 dark:text-[#E0E0E0] focus:outline-none focus:ring-2 focus:ring-[#2B6CB0] dark:focus:ring-[#4FC3F7] focus:border-transparent"
+            className="flex-1 border border-gray-600 rounded-lg px-4 py-3 bg-[#1E1E1E] text-[#E0E0E0] focus:outline-none focus:ring-2 focus:ring-[#4FC3F7] focus:border-transparent"
             disabled={isLoading}
           />
           <button
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
-            className="px-6 py-3 bg-[#2B6CB0] dark:bg-[#4FC3F7] text-white dark:text-black font-medium rounded-lg hover:bg-[#1a4a8a] dark:hover:bg-[#29B6F6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-[#4FC3F7] text-black font-medium rounded-lg hover:bg-[#29B6F6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>
