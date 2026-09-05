@@ -39,7 +39,9 @@ const Dashboard = () => {
   const upsellsShown = auditData.filter(entry => entry.action === 'upsell_shown').length;
   const paymentFailed = auditData.filter(entry => entry.action === 'payment_failed').length;
   const linkSent = auditData.filter(entry => entry.action === 'link_sent').length;
-  const failureRecoveryRate = paymentFailed > 0 ? ((linkSent / paymentFailed) * 100).toFixed(1) : '0.0';
+  const failureRecoveryRate = paymentFailed > 0 
+    ? Math.min((linkSent / paymentFailed) * 100, 100).toFixed(1) 
+    : '0.0';
 
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString('en-US', { 
