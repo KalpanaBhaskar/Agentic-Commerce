@@ -316,3 +316,82 @@ _Dates are intentionally omitted._
 
 ---
 
+## Feature 10 — Merchant Dashboard: Audit Feed + Revenue Summary
+- **Branch:** `feat/10-merchant-dashboard`
+- **PR:** #11
+
+**Prompt:**
+> 1. In the catalog page, please make sure that all the images are present and working and the stock decreases by 1 for all the goods purchased so far and then and there. Then this feature is pushed.
+> 
+> 2. In the next feature PR work using best practices on:
+> SESSION 10 — Merchant Dashboard: Audit Feed + Revenue Summary
+> Branch: feat/10-merchant-dashboard
+> 
+> CONTEXT:
+> - Read CLAUDE.md in the project root completely before starting.
+> - Session 9 is complete. React frontend exists in client/. npm run dev:all starts both servers.
+> - The GET /audit endpoint returns an array of audit log entries sorted by timestamp desc.
+> - Each entry has: timestamp, action, order_id, amount_paise, currency, product_id, status, agent_reasoning.
+> 
+> TASK:
+> Build the merchant dashboard page at route /dashboard in the React app.
+> 
+> STEP 1: Create client/src/pages/Dashboard.jsx
+> This page has two sections stacked vertically:
+> 
+> SECTION A — Revenue Summary Cards (top row, 4 cards side by side):
+> Card 1: "Total Orders" — count of entries where action === "order_created"
+> Card 2: "Total Captured (₹)" — sum of amount_paise where action === "payment_captured", divide by 100, format as ₹X,XXX
+> Card 3: "Upsells Shown" — count of entries where action === "upsell_shown"
+> Card 4: "Failure Recovery Rate" — (count of link_sent / count of payment_failed) * 100, show as X%
+> All 4 cards: white background, subtle shadow, metric in large bold text, label in small gray text below.
+> 
+> SECTION B — Live Audit Feed (full width below cards):
+> A table with columns: Time | Action | Order ID | Amount | Status | Agent Reasoning
+> - Time: format as HH:MM:SS (local time)
+> - Action: show as a colored badge — order_created=blue, payment_captured=green, upsell_shown=amber, payment_failed=red, retry_attempted=orange, link_sent=teal
+> - Order ID: show only last 8 chars with "..." prefix (e.g. "...xyz12345")
+> - Amount: show as ₹X.XX (convert from paise), show "—" if amount_paise is 0 or missing
+> - Status: success=green text, failed=red text, retried=orange text
+> - Agent Reasoning: truncate to 60 chars with "..." if longer, full text on hover (title attribute)
+> Table rows: alternating white/gray-50, newest entry at top.
+> 
+> AUTO-REFRESH: poll GET /api/audit every 5 seconds using setInterval in a useEffect.
+> Show "Last updated: HH:MM:SS" text above the table, update on each poll.
+> 
+> STEP 2: Update client/src/App.jsx
+> Add React Router (npm install react-router-dom in client/).
+> Routes:
+> - / → ChatWidget (existing)
+> - /dashboard → Dashboard
+> 
+> Update header "Merchant Dashboard →" link to use <Link to="/dashboard">.
+> Add "← Buyer Chat" link in dashboard header pointing back to /.
+> 
+> STEP 3: Add a loading state to Dashboard
+> While first fetch is in progress, show a centered spinner (CSS animation, no external library).
+> If fetch fails, show "Could not load audit data. Is the server running?" in red.
+
+**Outcome:** ✅
+- **Catalog Fixes**: Added missing image_url to prod_004, prod_006, prod_007, prod_009, prod_010. Updated stock levels based on actual purchases from audit.log (prod_001: 1→0, prod_003: 23→21, prod_005: 79→78, prod_008: 99→97)
+- **React Router Installation**: Installed react-router-dom package in client/
+- **Dashboard Page Created**: Created client/src/pages/Dashboard.jsx with:
+  - 4 revenue summary cards (Total Orders, Total Captured, Upsells Shown, Failure Recovery Rate)
+  - Live audit feed table with Time | Action | Order ID | Amount | Status | Agent Reasoning
+  - Auto-refresh every 5 seconds using setInterval with cleanup on unmount
+  - Loading state with CSS spinner animation
+  - Error handling with user-friendly message and retry button
+- **App.jsx Updated**: Converted to use React Router with routes for / (ChatWidget) and /dashboard (Dashboard)
+- **ChatWidget Updated**: Simplified to remove prop drilling, uses Link component for navigation to /dashboard
+- **Action Badges**: Colored badges for different actions (order_created=blue, payment_captured=green, upsell_shown=amber, payment_failed=red, retry_attempted=orange, link_sent=teal)
+- **Status Colors**: success=green text, failed=red text, retried=orange text
+- **Smart Formatting**: Order IDs truncated to last 8 chars with "..." prefix, amounts formatted as ₹X.XX, agent reasoning truncated to 60 chars with full text on hover
+- **Time Formatting**: HH:MM:SS (local time) format
+- **Metrics Calculation**: All metrics calculated client-side from audit data (order_created count, payment_captured sum, upsell_shown count, link_sent/payment_failed ratio)
+- **Last Updated Timestamp**: Shows "Last updated: HH:MM:SS" above table, updates on each poll
+- **Responsive Design**: Grid layout for metric cards (1 column mobile, 4 columns desktop)
+- **No Backend Changes**: Uses existing /api/audit endpoint only
+- **Catalog Enhancement**: Added "Buy via AI Chat →" button to each product card that redirects to chat with product name pre-filled
+
+---
+

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
-const CatalogPage = ({ onBackToHome }) => {
+const CatalogPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,12 +34,12 @@ const CatalogPage = ({ onBackToHome }) => {
       <div className="min-h-screen bg-[#121212] text-[#E0E0E0]">
         <header className="border-b border-gray-700 px-6 py-4">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <button 
-              onClick={onBackToHome}
+            <Link 
+              to="/"
               className="text-[#4FC3F7] hover:underline font-medium"
             >
               ← Back to Home
-            </button>
+            </Link>
             <h1 className="text-xl font-bold text-[#4FC3F7]">Product Catalog</h1>
           </div>
         </header>
@@ -54,12 +55,12 @@ const CatalogPage = ({ onBackToHome }) => {
       <div className="min-h-screen bg-[#121212] text-[#E0E0E0]">
         <header className="border-b border-gray-700 px-6 py-4">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <button 
-              onClick={onBackToHome}
+            <Link 
+              to="/"
               className="text-[#4FC3F7] hover:underline font-medium"
             >
               ← Back to Home
-            </button>
+            </Link>
             <h1 className="text-xl font-bold text-[#4FC3F7]">Product Catalog</h1>
           </div>
         </header>
@@ -77,12 +78,12 @@ const CatalogPage = ({ onBackToHome }) => {
       {/* Header */}
       <header className="border-b border-gray-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <button 
-            onClick={onBackToHome}
+          <Link 
+            to="/"
             className="text-[#4FC3F7] hover:underline font-medium"
           >
             ← Back to Home
-          </button>
+          </Link>
           <h1 className="text-xl font-bold text-[#4FC3F7]">Product Catalog</h1>
         </div>
       </header>
@@ -118,6 +119,12 @@ const CatalogPage = ({ onBackToHome }) => {
                       <span className="text-[#4FC3F7] font-bold">{formatPrice(product.price_paise)}</span>
                       <span className="text-xs text-gray-500">Stock: {product.stock}</span>
                     </div>
+                    <Link
+                      to={`/?q=${encodeURIComponent(product.name)}`}
+                      className="w-full bg-[#4FC3F7] text-black text-center py-2 px-4 rounded hover:bg-[#29B6F6] font-medium transition-colors"
+                    >
+                      Buy via AI Chat →
+                    </Link>
                     <div className="flex flex-wrap gap-2 mb-3">
                       {product.tags.slice(0, 3).map(tag => (
                         <span key={tag} className="text-xs bg-gray-700 px-2 py-1 rounded">
