@@ -373,7 +373,7 @@ _Dates are intentionally omitted._
 > If fetch fails, show "Could not load audit data. Is the server running?" in red.
 
 **Outcome:** ✅
-- **Catalog Fixes**: Added missing image_url to prod_004, prod_006, prod_007, prod_009, prod_010. Updated stock levels based on actual purchases from audit.log (prod_001: 15→1, prod_003: 25→23, prod_005: 80→79, prod_008: 100→99)
+- **Catalog Fixes**: Added missing image_url to prod_004, prod_006, prod_007, prod_009, prod_010. Updated stock levels based on actual purchases from audit.log (prod_001: 1→0, prod_003: 23→21, prod_005: 79→78, prod_008: 99→97)
 - **React Router Installation**: Installed react-router-dom package in client/
 - **Dashboard Page Created**: Created client/src/pages/Dashboard.jsx with:
   - 4 revenue summary cards (Total Orders, Total Captured, Upsells Shown, Failure Recovery Rate)
@@ -391,6 +391,7 @@ _Dates are intentionally omitted._
 - **Last Updated Timestamp**: Shows "Last updated: HH:MM:SS" above table, updates on each poll
 - **Responsive Design**: Grid layout for metric cards (1 column mobile, 4 columns desktop)
 - **No Backend Changes**: Uses existing /api/audit endpoint only
+- **Catalog Enhancement**: Added "Buy via AI Chat →" button to each product card that redirects to chat with product name pre-filled
 
 ---
 

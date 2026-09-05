@@ -119,6 +119,12 @@ const CatalogPage = () => {
                       <span className="text-[#4FC3F7] font-bold">{formatPrice(product.price_paise)}</span>
                       <span className="text-xs text-gray-500">Stock: {product.stock}</span>
                     </div>
+                    <Link
+                      to={`/?q=${encodeURIComponent(product.name)}`}
+                      className="w-full bg-[#4FC3F7] text-black text-center py-2 px-4 rounded hover:bg-[#29B6F6] font-medium transition-colors"
+                    >
+                      Buy via AI Chat →
+                    </Link>
                     <div className="flex flex-wrap gap-2 mb-3">
                       {product.tags.slice(0, 3).map(tag => (
                         <span key={tag} className="text-xs bg-gray-700 px-2 py-1 rounded">
