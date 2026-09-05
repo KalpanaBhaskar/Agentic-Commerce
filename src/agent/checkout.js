@@ -63,7 +63,7 @@ function buildSystemPrompt() {
  * Run the conversational checkout agent for one user message.
  * @param {string} userMessage   the customer's plain-language message
  * @param {string} [sessionId]   optional; a UUID is generated if omitted
- * @returns {Promise<{response_text:string, order_id:(string|null), payment_link:(string|null), tools_used:string[], session_id:string, upsell_shown:boolean, upsell_products:Array<{id:string,name:string,price_paise:number,price_inr:number}>}>}
+ * @returns {Promise<{response_text:string, order_id:(string|null), payment_link:(string|null), tools_used:string[], session_id:string, upsell_shown:boolean, upsell_products:Array<{id:string,name:string,price_paise:number,price_inr:number}>, product_image:(string|null)>}
  */
 async function processCheckout(userMessage, sessionId) {
   const session_id = sessionId || crypto.randomUUID();
@@ -75,6 +75,7 @@ async function processCheckout(userMessage, sessionId) {
   const tools_used = [];
   let order_id = null;
   let ordered_product_id = null;
+  let ordered_product = null;
   let payment_link = null;
   let response_text = '';
 
@@ -102,6 +103,7 @@ async function processCheckout(userMessage, sessionId) {
         if (tc.name === 'create_order' && result && result.order_id) {
           order_id = result.order_id;
           ordered_product_id = result.product_id || ordered_product_id;
+          ordered_product = result.product || ordered_product;
           payment_link = result.payment_link || payment_link;
         }
       } catch (e) {
@@ -162,6 +164,7 @@ async function processCheckout(userMessage, sessionId) {
     session_id,
     upsell_shown,
     upsell_products,
+    product_image: ordered_product?.image_url || null,
   };
 }
 

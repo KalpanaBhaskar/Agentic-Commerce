@@ -207,3 +207,112 @@ _Dates are intentionally omitted._
 - **docs/PROMPTS.md**: Updated with this session's prompt and outcome
 - All documentation follows the specified format and addresses the judging criteria (explainable, bounded, audit trail, graceful failure)
 - No source code files were modified — pure documentation feature
+
+---
+
+## Feature 9 — React chat frontend with enhanced UI/UX
+- **Branch:** `feat/09-react-frontend`
+- **PR:** #10 (to be opened)
+
+**Prompt:**
+> Add a React frontend for the buyer-facing chat widget. Use Vite for fast scaffolding. Place all frontend code in a top-level `client/` directory.
+> 
+> TASK:
+> - Scaffold React app with Vite in client/ directory
+> - Add Tailwind CSS for styling
+> - Configure Vite proxy to Express on port 3000
+> - Create ChatWidget.jsx component with chat interface
+> - Create App.jsx with header, main, footer layout
+> - Update server.js to serve React app in production
+> - Add scripts to root package.json (client, build:client, dev:all)
+> - Install concurrently for running both servers
+> 
+> ENHANCEMENTS REQUESTED:
+> - Explain audit logging, catalog, and database architecture
+> - Create comprehensive home page with clear UI/UX for humans and AI agents
+> - Implement proper dark/light mode with CSS variables
+> - Fix merchant dashboard navigation
+> - Improve ChatWidget styling per expert UI/UX guidelines (semantic HTML, minimalist design, high readability, native dark/light mode)
+> - Add edge case testing scenarios
+> - Implement novel agent improvements (product images in catalog and chat responses)
+> 
+> UI/UX GUIDELINES:
+> - Semantic, agent-readable structure using HTML5 elements
+> - Minimalist data presentation with neat spacing and boxed layouts
+> - Highly navigable with obvious navigation links
+> - Human-readable typography with system fonts and proper line-height
+> - Native light and dark mode using CSS variables
+> - Strict UI minimalism (no decorative CSS, shadows, gradients, animations)
+
+**Outcome:** ✅
+- **React Frontend**: Successfully scaffolded Vite + React app in `client/` directory with Tailwind CSS v3.4.0
+- **Vite Proxy Configuration**: Configured proxy to route `/api` calls to Express on port 3000
+- **ChatWidget Component**: Full-featured chat interface with:
+  - Message history with user/agent message styling
+  - Loading indicator ("RazorAgent is thinking...")
+  - Payment link button for orders
+  - Upsell highlighting with amber border
+  - Tools used badge showing agent actions
+  - Product image display in chat responses
+  - Auto-scroll to latest messages
+- **HomePage Component**: Comprehensive landing page with:
+  - Hero section explaining AI-powered shopping
+  - Feature breakdown (How It Works)
+  - Product category browsing
+  - Technical information for developers/AI agents
+  - Semantic HTML5 structure
+  - Minimalist boxed layouts with generous spacing
+  - Clear navigation links
+- **Dark/Light Mode**: Implemented using CSS variables with system preference detection and manual toggle
+- **Expert UI/UX Guidelines**: Applied semantic HTML, minimalist design, system fonts, proper spacing, and high readability
+- **Navigation**: Fixed merchant dashboard link, added "Back to Home" in chat, proper navigation between pages
+- **Novel Agent Improvements**: 
+  - Added `image_url` field to catalog products
+  - Enhanced checkout agent to return product images
+  - Chat widget now displays product images in responses
+- **Testing Scenarios**: Created comprehensive `docs/TESTING_SCENARIOS.md` with 20 test cases including happy paths, edge cases, error handling, security, performance, and accessibility tests
+- **Architecture Documentation**: Explained current system using flat files (catalog.json, audit.log, orders.json) instead of database for hackathon portability
+- **Server Integration**: Updated server.js to serve React app in production with proper static file serving
+- **Development Scripts**: Added `client`, `build:client`, and `dev:all` scripts with concurrently for running both servers
+- **Git Configuration**: Updated .gitignore to exclude client/node_modules and client/dist
+
+**Technical Implementation:**
+- Fixed Tailwind CSS PostCSS compatibility issue by using v3.4.0
+- Enhanced ChatWidget to accept dark mode props and render with proper theme classes
+- App component manages state for chat view vs home page and dark mode toggle
+- Session ID generation uses simple timestamp + random string for uniqueness
+- Product images use Unsplash URLs for demo purposes
+- All components follow semantic HTML5 structure and accessibility best practices
+
+**Run & Test Instructions:**
+1. `npm run dev:all` - Starts both Express server (port 3000) and Vite dev server (port 5173)
+2. Open http://localhost:5173 - Shows comprehensive home page
+3. Click "Start Shopping" - Navigates to chat interface
+4. Test chat with messages like "I want to buy headphones"
+5. Verify dark/light mode toggle works in both home and chat views
+6. Check navigation links (Catalog, Dashboard) function properly
+7. Test product image display in chat responses
+8. Verify upsell highlighting with amber border
+9. Check tools used badge shows agent actions
+10. Test "Back to Home" navigation from chat
+
+**Novel Features Implemented:**
+- Context-aware home page with clear human/AI-readable structure
+- Product image integration in catalog and chat responses
+- Enhanced dark/light mode with system preference detection
+- Comprehensive testing scenarios documentation
+- Minimalist, semantic UI following expert guidelines
+- Improved navigation and user experience
+
+**Enhancement Session** - UI/UX Improvements:
+- **Dark Mode Default**: Removed toggle buttons, set dark mode as default for professional appearance
+- **Catalog Page**: Created comprehensive product catalog with 10 products, images, category grouping, and detailed information
+- **Merchant Dashboard**: Built functional dashboard with audit data, stats overview, recent activity table, and system status
+- **Navigation Fixes**: All navigation links now functional using button components instead of broken hrefs
+- **Chat Pre-fill**: Category browse buttons (Electronics, Accessories, Apparel) pre-fill chat with contextual prompts
+- **Hover Tooltips**: API Documentation button shows 'To be updated...' message on hover
+- **URL Hash Management**: Implemented proper browser history and URL hash navigation (#chat, #catalog, #dashboard)
+- **Testing Documentation**: Created comprehensive testing instructions with 10 test categories and success criteria
+
+---
+

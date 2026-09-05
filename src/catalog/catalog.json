@@ -6,9 +6,10 @@
     "price_paise": 2999900,
     "currency": "INR",
     "category": "electronics",
-    "stock": 15,
+    "stock": 1,
     "upsell_ids": ["prod_005", "prod_006"],
-    "tags": ["headphones", "noise-cancelling", "wireless", "bluetooth", "sony", "audio"]
+    "tags": ["headphones", "noise-cancelling", "wireless", "bluetooth", "sony", "audio"],
+    "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop"
   },
   {
     "id": "prod_002",
@@ -19,7 +20,8 @@
     "category": "electronics",
     "stock": 40,
     "upsell_ids": ["prod_003", "prod_007"],
-    "tags": ["mouse", "wireless", "logitech", "productivity", "ergonomic"]
+    "tags": ["mouse", "wireless", "logitech", "productivity", "ergonomic"],
+    "image_url": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=300&fit=crop"
   },
   {
     "id": "prod_003",
@@ -28,9 +30,10 @@
     "price_paise": 749900,
     "currency": "INR",
     "category": "electronics",
-    "stock": 25,
+    "stock": 23,
     "upsell_ids": ["prod_002", "prod_007"],
-    "tags": ["keyboard", "mechanical", "wireless", "keychron", "productivity"]
+    "tags": ["keyboard", "mechanical", "wireless", "keychron", "productivity"],
+    "image_url": "https://images.unsplash.com/photo-1587829741301-dc798b91add1?w=400&h=300&fit=crop"
   },
   {
     "id": "prod_004",
@@ -41,7 +44,8 @@
     "category": "electronics",
     "stock": 60,
     "upsell_ids": ["prod_006"],
-    "tags": ["powerbank", "charging", "anker", "portable", "usb-c"]
+    "tags": ["powerbank", "charging", "anker", "portable", "usb-c"],
+    "image_url": "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400&h=300&fit=crop"
   },
   {
     "id": "prod_005",
@@ -50,9 +54,10 @@
     "price_paise": 199900,
     "currency": "INR",
     "category": "accessories",
-    "stock": 80,
+    "stock": 79,
     "upsell_ids": ["prod_001"],
-    "tags": ["case", "headphones", "travel", "protection", "accessory"]
+    "tags": ["case", "headphones", "travel", "protection", "accessory"],
+    "image_url": "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400&h=300&fit=crop"
   },
   {
     "id": "prod_006",
@@ -63,7 +68,8 @@
     "category": "accessories",
     "stock": 200,
     "upsell_ids": ["prod_004"],
-    "tags": ["cable", "usb-c", "charging", "accessory", "braided"]
+    "tags": ["cable", "usb-c", "charging", "accessory", "braided"],
+    "image_url": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
   },
   {
     "id": "prod_007",
@@ -74,7 +80,8 @@
     "category": "accessories",
     "stock": 120,
     "upsell_ids": ["prod_002", "prod_003"],
-    "tags": ["mousepad", "deskmat", "desk", "accessory", "xl"]
+    "tags": ["mousepad", "deskmat", "desk", "accessory", "xl"],
+    "image_url": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=300&fit=crop"
   },
   {
     "id": "prod_008",
@@ -83,9 +90,10 @@
     "price_paise": 129900,
     "currency": "INR",
     "category": "apparel",
-    "stock": 100,
+    "stock": 99,
     "upsell_ids": ["prod_009", "prod_010"],
-    "tags": ["t-shirt", "tshirt", "cotton", "blue", "apparel", "unisex"]
+    "tags": ["t-shirt", "tshirt", "cotton", "blue", "apparel", "unisex"],
+    "image_url": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=300&fit=crop"
   },
   {
     "id": "prod_009",
@@ -96,7 +104,8 @@
     "category": "apparel",
     "stock": 70,
     "upsell_ids": ["prod_008", "prod_010"],
-    "tags": ["hoodie", "fleece", "zip-up", "charcoal", "apparel", "jacket"]
+    "tags": ["hoodie", "fleece", "zip-up", "charcoal", "apparel", "jacket"],
+    "image_url": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=300&fit=crop"
   },
   {
     "id": "prod_010",
@@ -107,6 +116,7 @@
     "category": "apparel",
     "stock": 150,
     "upsell_ids": ["prod_008", "prod_009"],
-    "tags": ["cap", "hat", "baseball-cap", "black", "apparel"]
+    "tags": ["cap", "hat", "baseball-cap", "black", "apparel"],
+    "image_url": "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400&h=300&fit=crop"
   }
 ]
