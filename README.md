@@ -1,5 +1,6 @@
 # RazorAgent
 
+[Project in progress]/
 An AI agent that acts as a merchant's autonomous commerce layer on Razorpay test-mode APIs.
 
 ## Why Now
