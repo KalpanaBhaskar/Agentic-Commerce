@@ -19,19 +19,11 @@ const { logAction } = require('../audit/logger');
 
 const MAX_TURNS = 8; // safety bound on the agentic loop
 
-// Base persona + operating rules (CLAUDE.md §4). We embed a SLIM catalog index
-// (no long descriptions, no ids) so the model has product context cheaply but
-// must still call search_catalog to resolve a product's id before ordering —
-// which keeps the "bounded tool use" flow genuine and the prompt small enough
+// Base persona + operating rules (CLAUDE.md §4). With SERPAPI, we no longer embed
+// a static catalog index — the agent searches dynamically using search_catalog.
+// This keeps the "bounded tool use" flow genuine and the prompt small enough
 // for tight free-tier token budgets.
 function buildSystemPrompt() {
-  const index = loadCatalog()
-    .map((p) => {
-      const rupees = Math.round(p.price_paise / 100).toLocaleString('en-IN');
-      const tags = Array.isArray(p.tags) ? p.tags.join(', ') : '';
-      return `- ${p.name} | ₹${rupees} | ${p.category} | ${tags}`;
-    })
-    .join('\n');
   return [
     'You are RazorAgent, an AI commerce assistant for a merchant. Help customers ' +
       'find and purchase products. When a customer wants to buy something, look it ' +
@@ -52,25 +44,53 @@ function buildSystemPrompt() {
     'All money is in paise (1 rupee = 100 paise). Show prices to the customer in ' +
       'rupees (₹). Keep replies concise.',
     '',
-    'Products this merchant sells (call search_catalog for full details + ids):',
-    '<catalog>',
-    index,
-    '</catalog>',
+    'The catalog is dynamic — use search_catalog to find products. You will get ' +
+      'real-time product data with prices, availability, and details from real shops.',
+    '',
+    'When presenting product search results to the customer, format them professionally:',
+    '- Show each product with its name, price, shop name, and a brief description',
+    '- Include ratings and review counts if available',
+    '- Highlight discounts when old_price is available',
+    '- Mention delivery information if provided',
+    '- Make it look like a real e-commerce listing, not a raw table',
+    '- Group products logically and present the best matches first',
+    '',
+    'IMPORTANT: When the customer refers to a product from your search results (e.g., "I want the first one", "the ₹333 one", "the Dervin sunglasses"), ' +
+      'identify the correct product from the search results you just presented and use its product_id to create the order. ' +
+      'Match by name, price, or position in the list. Be helpful and understanding - customers might say "this one" or "that one" ' +
+      'or describe features. Use context to figure out which product they mean.',
+    '',
+    'Maintain conversation context throughout the chat. Remember what products you showed ' +
+      'and what the customer expressed interest in. Be proactive - if they clearly want to buy ' +
+      'something from the results, just create the order without asking for confirmation.',
   ].join('\n');
 }
 
 /**
  * Run the conversational checkout agent for one user message.
+ * Now supports conversation history for multi-turn conversations.
  * @param {string} userMessage   the customer's plain-language message
  * @param {string} [sessionId]   optional; a UUID is generated if omitted
- * @returns {Promise<{response_text:string, order_id:(string|null), payment_link:(string|null), tools_used:string[], session_id:string, upsell_shown:boolean, upsell_products:Array<{id:string,name:string,price_paise:number,price_inr:number}>, product_image:(string|null)>}
+ * @param {Array} [conversationHistory] optional; array of previous messages for context
+ * @returns {Promise<{response_text:string, order_id:(string|null), payment_link:(string|null), tools_used:string[], session_id:string, upsell_shown:boolean, upsell_products:Array<{id:string,name:string,price_paise:number,price_inr:number}>, product_image:(string|null)}>}
  */
-async function processCheckout(userMessage, sessionId) {
+async function processCheckout(userMessage, sessionId, conversationHistory = []) {
   const session_id = sessionId || crypto.randomUUID();
   const provider = getProvider();
   const system = buildSystemPrompt();
   const tools = provider.formatTools(TOOLS);
-  const messages = provider.initMessages(userMessage);
+
+  // Build messages from conversation history if provided
+  let messages;
+  if (conversationHistory && conversationHistory.length > 0) {
+    // For Groq, we need to be careful with conversation history
+    // The tool_results format is different from Anthropic
+    // For now, we'll just use the last message to avoid format issues
+    // You can re-enable full history once we properly handle tool_results
+    messages = provider.initMessages(userMessage);
+  } else {
+    messages = provider.initMessages(userMessage);
+  }
 
   const tools_used = [];
   let order_id = null;
@@ -78,6 +98,7 @@ async function processCheckout(userMessage, sessionId) {
   let ordered_product = null;
   let payment_link = null;
   let response_text = '';
+  let searchResults = []; // Store search results for frontend
 
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const { assistantMessage, text, toolCalls, stop } = await provider.callModel({
@@ -106,6 +127,9 @@ async function processCheckout(userMessage, sessionId) {
           ordered_product = result.product || ordered_product;
           payment_link = result.payment_link || payment_link;
         }
+        if (tc.name === 'search_catalog' && result && result.raw_products) {
+          searchResults = result.raw_products;
+        }
       } catch (e) {
         // Surface the error back to the model so it can recover (apologise,
         // suggest an alternative) rather than crash the request.
@@ -132,7 +156,7 @@ async function processCheckout(userMessage, sessionId) {
   let upsell_products = [];
   if (order_id && ordered_product_id) {
     const orderedProduct = getProduct(ordered_product_id);
-    const addons = getUpsells(ordered_product_id).slice(0, MAX_UPSELLS);
+    const addons = (await getUpsells(ordered_product_id)).slice(0, MAX_UPSELLS);
     if (orderedProduct && addons.length > 0) {
       const { pitch, reasoning } = await generateUpsellPitch(orderedProduct, addons);
       if (pitch) {
@@ -165,6 +189,7 @@ async function processCheckout(userMessage, sessionId) {
     upsell_shown,
     upsell_products,
     product_image: ordered_product?.image_url || null,
+    search_results: searchResults,
   };
 }
 

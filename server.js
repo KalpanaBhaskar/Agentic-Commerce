@@ -6,7 +6,6 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
-const { loadCatalog } = require('./src/catalog');
 const { createOrder } = require('./src/api/razorpay');
 const { readAudit } = require('./src/audit/logger');
 const webhookRouter = require('./src/webhooks/handler');
@@ -30,17 +29,6 @@ app.use(express.json());
 // GET /health — liveness probe. No auth.
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// GET /catalog — the agent-readable merchant catalog. No auth.
-// catalog.json is the single source of truth; we read it fresh each call.
-app.get('/catalog', (req, res) => {
-  try {
-    res.json(loadCatalog());
-  } catch (err) {
-    console.error('Failed to load catalog:', err.message);
-    res.status(500).json({ error: 'catalog_unavailable' });
-  }
 });
 
 // GET /audit — the audit trail as JSON, newest first. Read-only view over
@@ -91,7 +79,7 @@ app.post('/orders', async (req, res) => {
   }
 });
 
-// POST /chat — conversational checkout (Features 4-5). Body: { message, session_id? }.
+// POST /chat — conversational checkout (Features 4-5). Body: { message, session_id?, conversation_history? }.
 // Claude runs a BOUNDED tool_use loop (search -> order -> status) via
 // src/agent/checkout.js; the agent can only act through the four tool schemas.
 // After an order is placed, a tailored upsell is appended (Feature 5). Returns
@@ -115,7 +103,8 @@ app.post('/chat', async (req, res) => {
       upsell_shown,
       upsell_products,
       product_image,
-    } = await processCheckout(message, body.session_id);
+      search_results,
+    } = await processCheckout(message, body.session_id, body.conversation_history);
     return res.json({
       reply: response_text,
       order_id: order_id ?? null,
@@ -125,12 +114,14 @@ app.post('/chat', async (req, res) => {
       tools_used,
       session_id,
       product_image,
+      search_results: search_results || [],
     });
   } catch (err) {
     console.error('Chat failed:', err.message);
-    // 503 when the agent isn't configured (missing ANTHROPIC_API_KEY); 500 otherwise.
+    console.error('Error details:', err);
+    // 503 when the agent isn't configured (missing API key); 500 otherwise.
     const status = err.code === 'AGENT_NOT_CONFIGURED' ? 503 : 500;
-    return res.status(status).json({ error: 'chat_failed', message: err.message });
+    return res.status(status).json({ error: 'chat_failed', message: err.message, details: err.code || 'unknown_error' });
   }
 });
 

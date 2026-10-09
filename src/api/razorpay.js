@@ -42,6 +42,7 @@ function initRazorpay() {
  * @param {object}  args
  * @param {string}  args.product_id
  * @param {number}  args.quantity          integer 1..10
+ * @param {object}  [args.product]         optional product object (for SERPAPI products)
  * @param {string}  [args.agent_reasoning] why this order was created (from the
  *                                          checkout agent); falls back to a
  *                                          generated description. Logged in audit.
@@ -49,7 +50,7 @@ function initRazorpay() {
  * @returns {Promise<{order_id:string, amount_paise:number, currency:string, product:object, receipt:string}>}
  * @throws {Error} err.code = 'INVALID_QUANTITY' | 'PRODUCT_NOT_FOUND' | 'RAZORPAY_ERROR'
  */
-async function createOrder({ product_id, quantity, agent_reasoning, session_id } = {}) {
+async function createOrder({ product_id, quantity, product: providedProduct, agent_reasoning, session_id } = {}) {
   // 1. Validate quantity — bounded 1..10 (mirrors the create_order tool schema, §7).
   const qty = Number(quantity);
   if (!Number.isInteger(qty) || qty < 1 || qty > 10) {
@@ -58,8 +59,8 @@ async function createOrder({ product_id, quantity, agent_reasoning, session_id }
     throw err;
   }
 
-  // 2. Validate product exists in the catalog (single source of truth).
-  const product = getProduct(product_id);
+  // 2. Validate product exists - use provided product or fetch from catalog
+  const product = providedProduct || getProduct(product_id);
   if (!product) {
     const err = new Error(`Product not found: ${product_id}`);
     err.code = 'PRODUCT_NOT_FOUND';
@@ -86,6 +87,7 @@ async function createOrder({ product_id, quantity, agent_reasoning, session_id }
         product_id: product.id,
         product_name: product.name,
         quantity: String(qty),
+        source: product.source || 'catalog',
       },
     });
   } catch (e) {

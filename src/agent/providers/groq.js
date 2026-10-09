@@ -9,9 +9,8 @@
 // the wire format differs (OpenAI-style tools / tool_calls / role:"tool").
 
 const GROQ_URL = process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1/chat/completions';
-// gpt-oss-20b is a strong OpenAI-compatible tool-caller that stays well under
-// Groq's free-tier 8000 TPM budget (a full checkout ≈ 5k tokens). Override with
-// GROQ_MODEL (e.g. openai/gpt-oss-120b for stronger reasoning at higher cost).
+// User requested: openai/gpt-oss-20b
+// Override with GROQ_MODEL env var if needed
 const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
 const MAX_TOKENS = 1024;
 
@@ -64,6 +63,16 @@ async function callModel({ system, tools, messages }) {
     body.tool_choice = 'auto';
   }
 
+  // Debug logging
+  if (process.env.GROQ_DEBUG) {
+    console.error('[groq] Request:', {
+      model: MODEL,
+      messagesCount: messages.length,
+      toolsCount: tools.length,
+      hasToolChoice: !!body.tool_choice
+    });
+  }
+
   const resp = await fetch(GROQ_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${getKey()}`, 'Content-Type': 'application/json' },
@@ -72,9 +81,20 @@ async function callModel({ system, tools, messages }) {
 
   if (!resp.ok) {
     const detail = await resp.text().catch(() => '');
+    console.error('Groq API Error Details:', {
+      status: resp.status,
+      statusText: resp.statusText,
+      body: detail,
+      request: {
+        model: MODEL,
+        url: GROQ_URL,
+        hasTools: Array.isArray(tools) && tools.length > 0
+      }
+    });
     const err = new Error(`Groq API ${resp.status}: ${detail.slice(0, 200)}`);
     err.status = resp.status;
     err.code = 'GROQ_ERROR';
+    err.detail = detail;
     throw err;
   }
 

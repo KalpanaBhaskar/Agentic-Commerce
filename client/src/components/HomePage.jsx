@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const HomePage = () => {
-  const [showTooltip, setShowTooltip] = useState(false);
-
   return (
     <div className="min-h-screen dark">
       {/* Header */}
@@ -13,7 +11,7 @@ const HomePage = () => {
           <nav>
             <ul className="flex space-x-6">
               <li>
-                <Link 
+                <Link
                   to="/chat"
                   className="text-[#4FC3F7] hover:underline font-medium"
                 >
@@ -21,15 +19,7 @@ const HomePage = () => {
                 </Link>
               </li>
               <li>
-                <Link 
-                  to="/catalog"
-                  className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
-                >
-                  View Catalog
-                </Link>
-              </li>
-              <li>
-                <Link 
+                <Link
                   to="/dashboard"
                   className="text-gray-400 hover:text-[#4FC3F7] hover:underline"
                 >
@@ -96,25 +86,30 @@ const HomePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="border border-gray-700 p-6 hover:border-[#4FC3F7] transition-colors cursor-pointer">
                 <h4 className="text-xl font-semibold mb-2">Electronics</h4>
-                <p className="text-sm mb-3">Headphones, keyboards, mice, and more</p>
-                <Link to="/chat" className="text-[#4FC3F7] hover:underline text-sm">
+                <p className="text-sm mb-3">Phones, laptops, headphones, and more</p>
+                <Link to="/chat" state={{ initialQuery: 'electronics' }} className="text-[#4FC3F7] hover:underline text-sm">
                   Browse Electronics →
                 </Link>
               </div>
               <div className="border border-gray-700 p-6 hover:border-[#4FC3F7] transition-colors cursor-pointer">
-                <h4 className="text-xl font-semibold mb-2">Accessories</h4>
-                <p className="text-sm mb-3">Cases, cables, desk mats, and essentials</p>
-                <Link to="/chat" className="text-[#4FC3F7] hover:underline text-sm">
-                  Browse Accessories →
+                <h4 className="text-xl font-semibold mb-2">Fashion</h4>
+                <p className="text-sm mb-3">Clothing, shoes, accessories, and more</p>
+                <Link to="/chat" state={{ initialQuery: 'fashion' }} className="text-[#4FC3F7] hover:underline text-sm">
+                  Browse Fashion →
                 </Link>
               </div>
               <div className="border border-gray-700 p-6 hover:border-[#4FC3F7] transition-colors cursor-pointer">
-                <h4 className="text-xl font-semibold mb-2">Apparel</h4>
-                <p className="text-sm mb-3">T-shirts, hoodies, caps, and more</p>
-                <Link to="/chat" className="text-[#4FC3F7] hover:underline text-sm">
-                  Browse Apparel →
+                <h4 className="text-xl font-semibold mb-2">Home & Living</h4>
+                <p className="text-sm mb-3">Furniture, decor, kitchen, and more</p>
+                <Link to="/chat" state={{ initialQuery: 'home and living' }} className="text-[#4FC3F7] hover:underline text-sm">
+                  Browse Home & Living →
                 </Link>
               </div>
+            </div>
+            <div className="mt-4 text-center">
+              <Link to="/chat" className="text-[#4FC3F7] hover:underline text-sm">
+                Browse All Categories →
+              </Link>
             </div>
           </section>
 
@@ -141,25 +136,10 @@ const HomePage = () => {
                 <div>
                   <h5 className="font-medium mb-1">Complete Audit Trail</h5>
                   <p className="text-sm leading-relaxed">
-                    Every action is logged with explainable reasoning, making the system 
+                    Every action is logged with explainable reasoning, making the system
                     transparent and accountable for both humans and AI agents.
                   </p>
                 </div>
-              </div>
-              <div className="mt-6 relative inline-block">
-                <Link 
-                  to="/catalog"
-                  className="inline-block px-4 py-2 border border-[#4FC3F7] text-[#4FC3F7] hover:bg-[#4FC3F7] hover:text-black transition-colors text-sm"
-                  onMouseEnter={() => setShowTooltip(true)}
-                  onMouseLeave={() => setShowTooltip(false)}
-                >
-                  View API Documentation
-                </Link>
-                {showTooltip && (
-                  <div className="absolute bottom-full left-0 mb-2 px-3 py-1 bg-gray-800 text-gray-300 text-xs rounded whitespace-nowrap">
-                    API Documentation (To be updated...)
-                  </div>
-                )}
               </div>
             </div>
           </section>
@@ -178,7 +158,7 @@ const HomePage = () => {
               <div>
                 <h4 className="font-semibold mb-4">Quick Links</h4>
                 <ul className="space-y-2 text-sm">
-                  <li><Link to="/catalog" className="hover:underline">Product Catalog</Link></li>
+                  <li><Link to="/chat" className="hover:underline">Start Shopping</Link></li>
                   <li><Link to="/dashboard" className="hover:underline">Merchant Dashboard</Link></li>
                   <li><span className="text-gray-500">Audit Trail (Coming Soon)</span></li>
                 </ul>

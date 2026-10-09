@@ -66,8 +66,9 @@ const TOOLS = [
 
 // Compact product view for tool results — enough for Claude to reason about and
 // present, without dumping the whole record. Prices in paise AND rupees.
+// Now includes shop information and links for realistic product display.
 function slim(p) {
-  return {
+  const result = {
     id: p.id,
     name: p.name,
     price_paise: p.price_paise,
@@ -77,6 +78,20 @@ function slim(p) {
     stock: p.stock,
     upsell_ids: p.upsell_ids || [],
   };
+
+  // Add SERPAPI-specific fields if available
+  if (p.source === 'serpapi') {
+    result.shop_name = p.shop_name || null;
+    result.shop_icon = p.shop_icon || null;
+    result.product_link = p.product_link || null;
+    result.rating = p.rating || null;
+    result.reviews = p.reviews || null;
+    result.delivery = p.delivery || null;
+    result.old_price = p.old_price || null;
+    result.discount = p.discount || null;
+  }
+
+  return result;
 }
 
 /**
@@ -92,14 +107,19 @@ function slim(p) {
 async function executeTool(name, input = {}, ctx = {}) {
   switch (name) {
     case 'search_catalog': {
-      const results = searchCatalog(input.query);
-      return { query: input.query, count: results.length, products: results.map(slim) };
+      const results = await searchCatalog(input.query);
+      return { query: input.query, count: results.length, products: results.map(slim), raw_products: results };
     }
 
     case 'create_order': {
-      const { order_id, amount_paise, currency, product } = await createOrder({
+      // Get product from catalog to pass to createOrder (needed for SERPAPI products)
+      const { getProduct } = require('../catalog');
+      const product = getProduct(input.product_id);
+
+      const { order_id, amount_paise, currency, product: returnedProduct } = await createOrder({
         product_id: input.product_id,
         quantity: input.quantity,
+        product, // Pass product object for SERPAPI products
         agent_reasoning: ctx.reasoning, // capture WHY (§0) into the order_created audit line
         session_id: ctx.session_id,
       });
@@ -107,12 +127,12 @@ async function executeTool(name, input = {}, ctx = {}) {
       const payment_link = await createPaymentLink({
         order_id,
         amount_paise,
-        description: `${input.quantity} x ${product.name}`,
+        description: `${input.quantity} x ${returnedProduct.name}`,
       });
       return {
         order_id,
-        product_id: product.id,
-        product_name: product.name,
+        product_id: returnedProduct.id,
+        product_name: returnedProduct.name,
         quantity: input.quantity,
         amount_paise,
         amount_inr: amount_paise / 100,
@@ -122,7 +142,7 @@ async function executeTool(name, input = {}, ctx = {}) {
     }
 
     case 'get_upsell_suggestions': {
-      const suggestions = getUpsells(input.product_id);
+      const suggestions = await getUpsells(input.product_id);
       return {
         product_id: input.product_id,
         count: suggestions.length,
