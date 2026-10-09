@@ -1,7 +1,7 @@
 # RazorAgent
 
-[Project in progress]/
-An AI agent that acts as a merchant's autonomous commerce layer on Razorpay test-mode APIs.
+[Project in progress]\
+An AI agent that acts as a merchant's autonomous commerce layer on Razorpay test-mode APIs for products searched using the SerpAPI.
 
 ## Why Now
 
@@ -83,7 +83,8 @@ In Razorpay Dashboard → Webhooks:
 - Webhook Secret: Copy to `.env` as `WEBHOOK_SECRET`
 
 ## API Reference
-
+Coming soon
+<!--
 | Method | Endpoint | Body | Response |
 |--------|----------|------|----------|
 | GET | `/health` | None | `{status: "ok", timestamp: "..."}` |
@@ -93,7 +94,7 @@ In Razorpay Dashboard → Webhooks:
 | POST | `/chat` | `{message, session_id?}` | `{reply, order_id?, payment_link?, upsell_shown, upsell_products, tools_used}` |
 | GET | `/audit` | None | Array of audit log entries (newest first) |
 | GET | `/simulate-failure` | `?product_id=&delay=` | Demo of failure → retry → payment link flow |
-
+-->
 ## Test Commands
 
 ```bash
@@ -147,7 +148,7 @@ The audit trail shows every money action with:
 - **Bounded**: Only 4 tools available, enforced by schemas
 - **Immutable**: Append-only JSONL, never modified
 - **Visible**: `npm run audit` pretty-prints the full trail
-
+<!--
 ## Tech Stack
 
 | Layer | Choice | Why |
@@ -233,6 +234,8 @@ See [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) for the complete 8-step demo walk
 ## Architecture Decisions
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed explanations of every architectural choice.
+-->
+Tech Stack, Architecture, Demo Script - To be updated soon
 
 ## License
 
