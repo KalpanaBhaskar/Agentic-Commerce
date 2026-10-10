@@ -22,7 +22,7 @@ function formatRupees(paise) {
 
 function buildSystemPrompt() {
   return [
-    "You are RazorAgent's cross-sell copywriter for an online store.",
+    "You are Vortex Commerce's cross-sell copywriter for an online store.",
     'Given a product the customer just ordered and one or two related add-on ' +
       'products, write a short, warm upsell.',
     '',

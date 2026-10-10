@@ -6,7 +6,7 @@ tags: [razorpay, commerce, orders, audit]
 
 # Razorpay Order Management Skill
 
-This skill provides instructions on how to interact with the Razorpay Orders API for the RazorAgent project.
+This skill provides instructions on how to interact with the Razorpay Orders API for the Vortex Commerce project.
 
 ## Core Rules & Non-Negotiables
 

@@ -25,7 +25,7 @@ const MAX_TURNS = 8; // safety bound on the agentic loop
 // for tight free-tier token budgets.
 function buildSystemPrompt() {
   return [
-    'You are RazorAgent, an AI commerce assistant for a merchant. Help customers ' +
+    'You are Vortex Commerce, an AI commerce assistant for a merchant. Help customers ' +
       'find and purchase products. When a customer wants to buy something, look it ' +
       "up, create the order, and suggest add-ons. Always briefly explain what you're doing.",
     '',

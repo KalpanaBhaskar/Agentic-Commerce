@@ -188,7 +188,7 @@ const ChatWidget = () => {
             >
               ← Back to Home
             </Link>
-            <h1 className="text-xl font-bold text-[#4FC3F7]">RazorAgent Chat</h1>
+            <h1 className="text-xl font-bold text-[#4FC3F7]">Vortex Commerce Chat</h1>
           </div>
           <nav>
             <ul className="flex space-x-6 items-center">
@@ -217,7 +217,7 @@ const ChatWidget = () => {
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-gray-400 mt-8">
-            <p className="text-lg">Welcome to RazorAgent!</p>
+            <p className="text-lg">Welcome to Vortex Commerce!</p>
             <p className="text-sm mt-2">Type a message to start shopping with AI assistance.</p>
           </div>
         )}
@@ -312,7 +312,7 @@ const ChatWidget = () => {
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-[#1E1E1E] text-[#E0E0E0] rounded-lg p-4 border border-gray-700">
-              <p className="text-sm">RazorAgent is thinking...</p>
+              <p className="text-sm">Vortex Commerce is thinking...</p>
             </div>
           </div>
         )}

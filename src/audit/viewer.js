@@ -115,7 +115,7 @@ function renderTable(rows) {
 function printHelp() {
   console.log(
     [
-      'RazorAgent audit viewer — pretty-print the money-action audit trail.',
+      'Vortex Commerce audit viewer — pretty-print the money-action audit trail.',
       '',
       'Usage:',
       '  npm run audit',
@@ -139,7 +139,7 @@ function main(argv = process.argv.slice(2)) {
   if (args.action) records = records.filter((r) => r.action === args.action);
   if (args.limit) records = records.slice(0, args.limit);
 
-  const title = 'RazorAgent — Audit Trail' + (args.action ? ` (action=${args.action})` : '');
+  const title = 'Vortex Commerce — Audit Trail' + (args.action ? ` (action=${args.action})` : '');
   console.log('\n' + title);
 
   if (records.length === 0) {

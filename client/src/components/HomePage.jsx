@@ -7,7 +7,7 @@ const HomePage = () => {
       {/* Header */}
       <header className="border-b border-gray-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#4FC3F7]">RazorAgent</h1>
+          <h1 className="text-2xl font-bold text-[#4FC3F7]">Vortex Commerce</h1>
           <nav>
             <ul className="flex space-x-6">
               <li>
@@ -39,7 +39,7 @@ const HomePage = () => {
             <div className="border border-gray-700 p-8">
               <h2 className="text-4xl font-bold mb-4">AI-Powered Shopping Assistant</h2>
               <p className="text-lg leading-relaxed mb-6">
-                Experience the future of e-commerce with RazorAgent. Our AI assistant helps you find products, 
+                Experience the future of e-commerce with Vortex Commerce. Our AI assistant helps you find products, 
                 compare options, and complete purchases using natural conversation. No complex forms, no endless 
                 scrolling—just tell us what you need.
               </p>
@@ -66,7 +66,7 @@ const HomePage = () => {
               <div className="border border-gray-700 p-6">
                 <h4 className="text-xl font-semibold mb-3">2. Get Smart Recommendations</h4>
                 <p className="leading-relaxed">
-                  RazorAgent analyzes our catalog to find perfect matches, suggests related products, 
+                  Vortex Commerce analyzes our catalog to find perfect matches, suggests related products, 
                   and explains why each recommendation fits your needs.
                 </p>
               </div>
@@ -150,7 +150,7 @@ const HomePage = () => {
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
               <div>
-                <h4 className="font-semibold mb-4">RazorAgent</h4>
+                <h4 className="font-semibold mb-4">Vortex Commerce</h4>
                 <p className="text-sm leading-relaxed">
                   AI-powered commerce layer built on Razorpay test-mode APIs and Claude AI.
                 </p>
