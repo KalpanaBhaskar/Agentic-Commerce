@@ -1,4 +1,4 @@
-// server.js — Express entry point for RazorAgent
+// server.js — Express entry point for Vortex Commerce
 // Feature 1: scaffold + agent-readable catalog endpoint.
 // Later features mount /orders, /chat, /webhook on this same app.
 
@@ -9,7 +9,8 @@ const path = require('path');
 const { createOrder } = require('./src/api/razorpay');
 const { readAudit } = require('./src/audit/logger');
 const webhookRouter = require('./src/webhooks/handler');
-const { processCheckout } = require('./src/agent/checkout');
+const { processCheckout } = require('./src/agent/checkout'); // legacy, kept for 1 release
+const { processChat } = require('./src/agent/run'); // NEW: LangChain agent
 const { handlePaymentFailure } = require('./src/failures/handler');
 
 const app = express();
@@ -79,11 +80,11 @@ app.post('/orders', async (req, res) => {
   }
 });
 
-// POST /chat — conversational checkout (Features 4-5). Body: { message, session_id?, conversation_history? }.
-// Claude runs a BOUNDED tool_use loop (search -> order -> status) via
-// src/agent/checkout.js; the agent can only act through the four tool schemas.
-// After an order is placed, a tailored upsell is appended (Feature 5). Returns
-// the natural-language reply, any order_id / payment_link, and the upsell shown.
+// POST /chat — conversational checkout (LangChain agent, Task 7).
+// Body: { message, session_id?, conversation_history? }.
+// Agent uses classify_intent -> search_* -> create_order -> get_upsell_suggestions.
+// Returns markdown reply with product cards (image, shop, price, discount, Buy Now).
+// Legacy processCheckout kept for 1 release; switch via USE_LEGACY_CHAT=1 env.
 app.post('/chat', async (req, res) => {
   const body = req.body || {};
   const message = body.message;
@@ -92,6 +93,10 @@ app.post('/chat', async (req, res) => {
       .status(400)
       .json({ error: 'invalid_message', message: 'Body must include a non-empty "message" string.' });
   }
+
+  // Allow fallback to legacy for 1 release
+  const useLegacy = process.env.USE_LEGACY_CHAT === '1';
+  const handler = useLegacy ? processCheckout : processChat;
 
   try {
     const {
@@ -104,7 +109,8 @@ app.post('/chat', async (req, res) => {
       upsell_products,
       product_image,
       search_results,
-    } = await processCheckout(message, body.session_id, body.conversation_history);
+      trace_id,
+    } = await handler(message, body.session_id, body.conversation_history);
     return res.json({
       reply: response_text,
       order_id: order_id ?? null,
@@ -115,6 +121,7 @@ app.post('/chat', async (req, res) => {
       session_id,
       product_image,
       search_results: search_results || [],
+      trace_id: trace_id || null,
     });
   } catch (err) {
     console.error('Chat failed:', err.message);
@@ -192,7 +199,7 @@ if (process.env.NODE_ENV === 'production') {
 // Only start listening when run directly (not when imported by tests).
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`RazorAgent server running on http://localhost:${PORT}`);
+    console.log(`Vortex Commerce server running on http://localhost:${PORT}`);
   });
 }
 
