@@ -8,7 +8,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const TMP_AUDIT = path.join(os.tmpdir(), `razoragent-audit-${process.pid}-${Date.now()}.log`);
+const TMP_AUDIT = path.join(os.tmpdir(), `vortex-audit-${process.pid}-${Date.now()}.log`);
 process.env.AUDIT_LOG_PATH = TMP_AUDIT;
 
 const { logAction, readAudit } = require('../src/audit/logger');

@@ -9,7 +9,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-process.env.AUDIT_LOG_PATH = path.join(os.tmpdir(), `razoragent-failure-${process.pid}-${Date.now()}.log`);
+process.env.AUDIT_LOG_PATH = path.join(os.tmpdir(), `vortex-failure-${process.pid}-${Date.now()}.log`);
 
 // Mock the SDK wrappers the handler depends on — do NOT hit Razorpay in tests.
 jest.mock('../src/api/razorpay');

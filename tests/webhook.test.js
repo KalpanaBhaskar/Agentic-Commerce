@@ -10,7 +10,7 @@ const crypto = require('crypto');
 
 // Isolate the audit trail and pin a known webhook secret BEFORE requiring the
 // handler. (These are set on process.env, which the handler reads at request time.)
-process.env.AUDIT_LOG_PATH = path.join(os.tmpdir(), `razoragent-webhook-${process.pid}-${Date.now()}.log`);
+process.env.AUDIT_LOG_PATH = path.join(os.tmpdir(), `vortex-webhook-${process.pid}-${Date.now()}.log`);
 const WEBHOOK_SECRET = 'test_webhook_secret_123';
 process.env.WEBHOOK_SECRET = WEBHOOK_SECRET;
 
