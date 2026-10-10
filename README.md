@@ -1,241 +1,228 @@
-# RazorAgent
+# Vortex Commerce
 
-[Project in progress]\
-An AI agent that acts as a merchant's autonomous commerce layer on Razorpay test-mode APIs for products searched using the SerpAPI.
+**Multi-vertical agentic commerce on Razorpay test-mode + SerpApi + Groq + LangChain.**
 
-## Why Now
+Ask in plain English for *anything* — retail products, hotels, flights,
+Airbnb stays, restaurants, local services, apps — and a bounded AI agent
+searches live SerpApi engines, shows each option as a card with **image, shop,
+location, price, discount, rating, delivery + Buy button**, and on Buy creates a
+**Razorpay test-mode order + payment link with little to no extra input**.
+Every money action is explainable and audit-logged. Previously named
+`RazorAgent`; v2 renames to **Vortex Commerce** (see `docs/VORTEX_ARCHITECTURE.md`).
 
-Agentic Commerce Protocol (ACP) is emerging as the standard for AI-to-AI transactions, while NPCI's Unified Agent Platform (UAP) is building the local infrastructure for India. RazorAgent demonstrates a Razorpay-native implementation where merchants maintain control through bounded tool schemas and complete audit trails — exactly what judges need to see for agent-to-agent commerce.
+## How it works (user view)
 
-## Architecture
+1. **Tell it anything:** "Sony mirrorless camera", "boutique hotel downtown
+   Chicago", "sushi near me Friday night", "flight NYC→London".
+2. **Agent understands:** Groq (`openai/gpt-oss-20b`) classifies the vertical,
+   resolves entities via Knowledge Graph ("Apple Park" → address/coords), then
+   routes to the right SerpApi engine(s).
+3. **Compare cards:** each item renders markdown + a product card (image
+   guaranteed, shop, location, rating/reviews, old price → discount %,
+   delivery, View Details link) with its own **Buy Now**.
+4. **One-click Buy:** Buy Now sends `I want to buy <name> (ID: <id>)` to
+   `/chat`; the agent calls `create_order` (qty defaults 1) → real Razorpay
+   TEST order → payment link. Pay via the link. No card data ever touches the agent.
+5. **Verify everything:** Merchant Dashboard + `GET /audit` + `npm run audit`
+   show the append-only trail; LangSmith/Langfuse show the agent trace.
+
+## Architecture (see docs/VORTEX_ARCHITECTURE.md for the full diagram)
 
 ```
-Buyer (Human/AI)
-    ↓ POST /chat {message}
-Claude Agent (tool_use)
-    ↓ bounded tool calls
-┌─────────────────────────────────────┐
-│  search_catalog  →  catalog.json   │
-│  create_order    →  Razorpay API   │
-│  get_upsells     →  catalog.json   │
-│  get_order_status→  Razorpay API   │
-└─────────────────────────────────────┘
-    ↓ every money action
-audit.log (JSONL, append-only)
+Browser → Express (/chat,/orders,/audit,/webhook) → LangChain Agent (ChatGroq)
+  → IntentClassifier → KnowledgeGraph resolver → Router → Vertical SerpApi tools
+  → ImageEnricher (≥1 image) → CreateOrderTool (Razorpay FROZEN) → markdown reply
+  → audit.log + LangSmith/Langfuse trace
 ```
 
-## Features
+**Routing matrix (normative):**
 
-| Feature | Endpoint | What it does |
-|---------|----------|--------------|
-| Catalog | `GET /catalog` | Returns agent-readable product catalog with upsell cross-references |
-| Order Creation | `POST /orders` | Creates Razorpay test-mode orders with audit logging |
-| Webhook Handler | `POST /webhook` | Verifies HMAC signatures, captures payments, handles failures |
-| Conversational Checkout | `POST /chat` | Claude agent parses natural language → product → order via tool_use |
-| Upsell Agent | `POST /chat` | Suggests related products with LLM reasoning after order creation |
-| Failure Handler | `GET /simulate-failure` | Retries failed payments, falls back to payment links |
+| Intent | Engine |
+|---|---|
+| general shopping / price compare | `google_shopping` (fallback aggregator) |
+| Amazon specs/reviews | `amazon` |
+| groceries/essentials | `walmart` |
+| hardware/tools | `home_depot` |
+| unique/secondhand | `ebay` |
+| hotels | `google_hotels` (+ `tripadvisor` reviews) |
+| flights | `google_flights` |
+| villas/apartments | `airbnb` |
+| ratings/reviews lookup | `tripadvisor` |
+| food delivery/services/menus | `yelp` |
+| table booking | `opentable` |
+| hours/address/storefront | `google_maps`/`local` |
+| apps/ebooks/media | `apple_app_store`, `google_play` |
+| disambiguation/brand verify ("near X") | `knowledge_graph` FIRST (context only) |
+| item image | `google_images` enrichment, ≥1 per item |
 
-## Setup Instructions
+**Tech stack:** Node 20, Express 4, `razorpay` SDK (frozen), `serpapi`,
+LangChain (`langchain`, `@langchain/core`, `@langchain/groq` ChatGroq),
+`langsmith`, `langfuse`, `zod`, React+Vite+Tailwind,
+`react-markdown`+`remark-gfm`. **Grok/Groq is the only LLM.**
+**Razorpay logic is never changed**, only wrapped.
 
-### 1. Clone the repository
+## Setup
+
+### 1. Clone + install
 ```bash
-git clone https://github.com/KalpanaBhaskar/Agentic-Commerce.git
-cd Agentic-Commerce
-```
-
-### 2. Install dependencies
-```bash
+git clone <this-repo> vortex-commerce
+cd vortex-commerce
 npm install
+cd client && npm install && cd ..
 ```
 
-### 3. Set up environment variables
+### 2. Env
 ```bash
 cp .env.example .env
 ```
+Fill in (existing keys keep working):
+- `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` — Dashboard → Settings → API Keys → Test Mode
+- `WEBHOOK_SECRET` — Dashboard → Webhooks → Add Webhook → copy secret
+- `LLM_PROVIDER=groq`, `GROQ_API_KEY=gsk_…`, `GROQ_MODEL=openai/gpt-oss-20b`
+- `SERPAPI_API_KEY` — https://serpapi.com/manage-api-key
+- `PORT=3000`, `NGROK_URL=https://xxxx.ngrok.io` (after step 4)
+- Observability (new, optional but recommended):
+  `LANGCHAIN_TRACING_V2=true`, `LANGCHAIN_PROJECT=vortex-commerce`,
+  `LANGSMITH_API_KEY=`, `LANGFUSE_PUBLIC_KEY=`, `LANGFUSE_SECRET_KEY=`
 
-Edit `.env` and fill in:
-- `RAZORPAY_KEY_ID`: Get from [Razorpay Dashboard](https://dashboard.razorpay.com) → Settings → API Keys → Test Mode
-- `RAZORPAY_KEY_SECRET`: Get from the same place (never commit this)
-- `WEBHOOK_SECRET`: From Dashboard → Webhooks → Add Webhook → copy secret
-- `ANTHROPIC_API_KEY`: Your Anthropic API key for Claude
-- `PORT`: 3000 (default)
-- `NGROK_URL`: Your ngrok URL (set after running ngrok in step 5)
-
-### 4. Start the development server
+### 3. Run
 ```bash
-npm run dev
+npm run dev          # backend :3000
+npm run client       # frontend (Vite) in second terminal
+# or: npm run dev:all
 ```
 
-### 5. Expose localhost with ngrok (separate terminal)
+### 4. Webhooks (test mode)
 ```bash
 ngrok http 3000
 ```
+Dashboard → Webhooks: URL `https://xxxx.ngrok.io/webhook`, events
+`payment.captured`, `payment.failed`. Keep `server.js` order:
+`/webhook` (raw body) BEFORE `express.json()` — load-bearing.
 
-Copy the https URL (e.g., `https://xxxx.ngrok.io`) and set it in `.env`:
-```
-NGROK_URL=https://xxxx.ngrok.io
-```
+## API reference
 
-### 6. Configure Razorpay webhook
-In Razorpay Dashboard → Webhooks:
-- Webhook URL: `https://xxxx.ngrok.io/webhook`
-- Events to subscribe: `payment.captured`, `payment.failed`
-- Webhook Secret: Copy to `.env` as `WEBHOOK_SECRET`
-
-## API Reference
-Coming soon
-<!--
 | Method | Endpoint | Body | Response |
-|--------|----------|------|----------|
-| GET | `/health` | None | `{status: "ok", timestamp: "..."}` |
-| GET | `/catalog` | None | Array of 10 products with upsell_ids |
-| POST | `/orders` | `{product_id, quantity}` | `{order_id, amount_paise, amount_inr, product_name, razorpay_order}` |
-| POST | `/webhook` | Raw Razorpay webhook payload | `{status: "handled"}` (200) or error (400) |
-| POST | `/chat` | `{message, session_id?}` | `{reply, order_id?, payment_link?, upsell_shown, upsell_products, tools_used}` |
-| GET | `/audit` | None | Array of audit log entries (newest first) |
-| GET | `/simulate-failure` | `?product_id=&delay=` | Demo of failure → retry → payment link flow |
--->
-## Test Commands
+|---|---|---|---|
+| GET | `/health` | — | `{status:"ok",timestamp}` |
+| POST | `/chat` | `{message, session_id?, conversation_history?}` | `{reply, order_id?, payment_link?, tools_used, session_id, upsell_shown, upsell_products, product_image, search_results: Item[], trace_id?}` — `reply` is markdown; `search_results` follow `src/serp/types.js` Item contract (each has `image_url`, `shop_name`, `location`, `discount_pct`, …) |
+| POST | `/orders` | `{product_id, quantity?}` qty 1..10 | `{order_id, amount_paise, amount_inr, product_name, razorpay_order}` |
+| GET | `/audit` | — | audit entries newest-first |
+| GET | `/simulate-failure` | `?product_id=&delay=` | demo failure→retry→link flow |
+
+**One-click Buy contract:** frontend `Buy Now` on any card sends
+`POST /chat {message:"I want to buy <name> (ID: <id>)", session_id}`; backend
+matches the ID from cached search results, runs `create_order` + payment link,
+returns `order_id` + `payment_link`. No extra user questions.
+
+## Test commands
 
 ```bash
-# Health check
 curl http://localhost:3000/health
-
-# Get catalog
-curl http://localhost:3000/catalog
-
-# Create order
-curl -X POST http://localhost:3000/orders \
-  -H "Content-Type: application/json" \
-  -d '{"product_id":"prod_001","quantity":1}'
-
-# Conversational checkout
-curl -X POST http://localhost:3000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message":"I want Sony noise-cancelling headphones"}'
-
-# View audit trail
+curl -X POST http://localhost:3000/chat -H "Content-Type: application/json" \
+  -d '{"message":"boutique hotel downtown Chicago"}'
+curl -X POST http://localhost:3000/chat -H "Content-Type: application/json" \
+  -d '{"message":"Sony mirrorless camera"}'
 curl http://localhost:3000/audit
-
-# Simulate failure (demo mode)
-curl http://localhost:3000/simulate-failure?product_id=prod_001
-
-# Run audit viewer CLI
+curl "http://localhost:3000/simulate-failure?product_id=prod_001&delay=200"
 npm run audit
-
-# Run tests
 npm test
 ```
 
-## Audit Trail Example
-
-```json
-{
-  "timestamp": "2025-01-15T10:30:00.000Z",
-  "action": "order_created",
-  "order_id": "order_TX9yN7HZ7gasqE",
-  "amount_paise": 2999900,
-  "currency": "INR",
-  "product_id": "prod_001",
-  "status": "success",
-  "agent_reasoning": "User asked for noise-cancelling headphones. Matched SKU prod_001. Created order.",
-  "session_id": "sess_abc123"
-}
-```
-
-The audit trail shows every money action with:
-- **Explainable**: `agent_reasoning` field shows WHY the agent acted
-- **Bounded**: Only 4 tools available, enforced by schemas
-- **Immutable**: Append-only JSONL, never modified
-- **Visible**: `npm run audit` pretty-prints the full trail
-<!--
-## Tech Stack
-
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Runtime | Node.js 20 LTS | Async-native, best for webhook handling |
-| HTTP Server | Express 4 | Minimal, battle-tested, easy to reason about |
-| Razorpay | `razorpay` npm SDK | Official SDK, handles Basic auth + webhook verification |
-| AI/Agent | Anthropic SDK (`@anthropic-ai/sdk`) | Claude claude-sonnet-4-6 for tool_use (function calling) |
-| Persistence | Flat files: `catalog.json`, `audit.log` (JSONL), `orders.json` | No DB for hackathon — portable, inspectable |
-| Webhook Tunnel | ngrok | Exposes localhost:3000 to Razorpay in test mode |
-| Dev Tooling | nodemon, dotenv, Jest | Auto-restart, env vars, unit tests |
-| Version Control | Git + GitHub | Feature branches → PR → merge |
-
-## Judging Criteria Checklist
-
-✅ **Every money action explainable**
-- Audit log includes `agent_reasoning` field for all agent-initiated actions
-- `npm run audit` shows full trail with reasoning truncated to 40 chars
-
-✅ **Bounded and gated**
-- Agent can ONLY call 4 tools: `search_catalog`, `create_order`, `get_upsell_suggestions`, `get_order_status`
-- Tool schemas enforce input validation (quantity 1-10, required fields)
-- Agent never sees raw card data — only scoped payment links
-
-✅ **Audit trail visible**
-- `GET /audit` returns full audit log (newest first)
-- `npm run audit` CLI renders formatted table with filters
-- Actions: `order_created`, `payment_captured`, `upsell_shown`, `payment_failed`, `retry_attempted`, `link_sent`
-
-✅ **One failure handled gracefully**
-- `payment.failed` webhook → 2s backoff → retry → payment link fallback
-- `GET /simulate-failure` demonstrates the full recovery flow
-- All failure/retry actions logged to audit
-
-## Project Structure
+## Codebase map (what must be implemented — SOLID)
 
 ```
-razoragent/
-├── CLAUDE.md                        ← Source of truth for development
-├── README.md                        ← This file
-├── .env                             ← Never commit; copy from .env.example
-├── .env.example                     ← Template for environment variables
-├── .gitignore
-├── package.json
-├── server.js                        ← Express entry point
-├── src/
-│   ├── api/
-│   │   ├── razorpay.js              ← SDK wrapper: createOrder, capturePayment, verifyWebhook
-│   │   └── paymentLinks.js          ← Creates payment links (failure fallback)
-│   ├── agent/
-│   │   ├── checkout.js              ← Conversational checkout: NLP → product → order
-│   │   ├── upsell.js                ← Upsell engine: given product, return related + reasoning
-│   │   └── tools.js                 ← Claude tool_use schemas (the "bounded" part)
-│   ├── catalog/
-│   │   ├── catalog.json             ← Merchant product data (agent-readable)
-│   │   └── index.js                 ← Catalog loader, search, upsell resolver
-│   ├── audit/
-│   │   ├── logger.js                ← Append-only JSONL writer
-│   │   └── viewer.js                ← CLI pretty-printer: `npm run audit`
-│   ├── webhooks/
-│   │   └── handler.js               ← Express route: verify signature → dispatch → log → capture
-│   └── failures/
-│       └── handler.js               ← payment.failed → retry (2s backoff) → offer link
-├── skills/
-│   ├── razorpay-order/SKILL.md      ← Teaches agent the order lifecycle
-│   ├── merchant-catalog/SKILL.md    ← Teaches agent catalog reading + upsell
-│   └── audit-trail/SKILL.md         ← Teaches agent the audit logging pattern
-├── tests/
-│   ├── audit.test.js                ← Audit logger tests
-│   ├── webhook.test.js              ← Webhook verification tests
-│   └── failure.test.js               ← Failure handler tests
-└── docs/
-    ├── PROMPTS.md                   ← Log every Claude Code session prompt + outcome
-    ├── DEMO_SCRIPT.md               ← Judge-facing demo walkthrough
-    ├── ARCHITECTURE.md              ← Architectural decisions and rationale
-    └── sessions/                    ← Exported .md session files
+server.js                        # gateway; webhook-raw-first order FROZEN
+src/api/razorpay.js              # FROZEN money core (paise, qty 1..10, receipt UUID, audit)
+src/api/paymentLinks.js          # FROZEN link fallback
+src/api/index.js                 # NEW: IPaymentService factory (D)
+src/webhooks/handler.js          # FROZEN HMAC(raw body)→capture→audit
+src/failures/handler.js          # FROZEN failed→2s backoff→retry→link
+src/agent/llm.js                 # NEW: ChatGroq(openai/gpt-oss-20b) singleton
+src/agent/run.js                 # NEW: LangChain ToolCallingAgent+Executor(maxIter 8); replaces checkout loop 1:1
+src/agent/checkout.js            # KEEP 1 release as reference; hot path moves to run.js
+src/agent/tools.js               # KEEP 1 release; new tools below are the hot path
+src/agent/tools/*.js             # NEW: one StructuredTool file per vertical + ResolveEntity/CreateOrder/Status/Upsell (S/L)
+  classifyIntent.js router.js(entity+vertical→engines) resolveEntity.js createOrderTool.js …
+src/serp/types.js                # NEW: canonical Item contract (image_url guaranteed)
+src/serp/base.js                 # NEW: BaseSerpTool abstract (engine,map,cache,log) (L)
+src/serp/router.js               # NEW: pure vertical→engines table (§3) (O)
+src/serp/<vertical>.js           # NEW: amazon,walmart,homeDepot,ebay,googleShopping,hotels,
+                                 #   flights,airbnb,tripadvisor,yelp,openTable,maps,apps (1 file each)
+src/serp/knowledgeGraph.js       # NEW: context-only resolver (address/coords/type)
+src/serp/imageEnricher.js        # NEW: google_images fallback; logs image_hit/fallback
+src/catalog/{index.js,serpapi.js,catalog.json}  # KEEP as fallback cache source
+src/audit/logger.js              # EXTEND-ONLY: + vertical,engine,trace_id,image_url
+src/observe/{langsmith.js,langfuse.js}          # NEW: tracing/scores wrappers
+client/src/components/ChatWidget.jsx  # EXTEND-ONLY: full markdown, ProductCard w/ Buy Now per item
+client/src/components/ProductCard.jsx # NEW: extract from ChatWidget (image,shop,loc,discount,…)
+client/src/components/HomePage.jsx    # EXTEND-ONLY: Vortex hero + 4-vertical explainer; keep old sections
+client/src/pages/Dashboard.jsx        # EXTEND-ONLY: + vertical/engine/trace columns; keep cards/table
 ```
 
-## Demo Script
+**SOLID rules:** S — one file, one job; O — new vertical = new file + router
+row; L — adapters/tools substitutable via base classes; I —
+`ISerpAdapter/IPaymentService/IImageEnricher` small interfaces; D — agent
+depends on interfaces, factories wire concretions.
 
-See [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) for the complete 8-step demo walkthrough for judges.
+## Task plan (Task 1 → Task N — implement in order)
 
-## Architecture Decisions
+- [ ] **Task 1 — Rename RazorAgent→Vortex Commerce (no logic).** `package.json`
+  name `vortex-commerce`, server log string, frontend titles/headers/footers,
+  docs headers, `.env.example` comments. Verify `npm test`, `/health`.
+- [ ] **Task 2 — Freeze money core + extract interface.** Create
+  `src/api/index.js` `IPaymentService` factory wrapping `razorpay.js`/
+  `paymentLinks.js` without behavior change. Pin tests: paise math, qty 1..10,
+  receipt UUID, `order_created`/`link_sent` audit lines.
+- [ ] **Task 3 — SerpApi vertical adapters (routing matrix).** Create
+  `src/serp/types.js` + `base.js` + `router.js` + one file per engine in §3
+  table (amazon, walmart, home_depot, ebay, google_shopping fallback,
+  google_hotels, google_flights, airbnb, tripadvisor, yelp, opentable,
+  google_maps/local, app stores). Each maps raw JSON → Item. Google Shopping
+  is fallback when merchant engine empty/errors.
+- [ ] **Task 4 — Image guarantee.** `src/serp/imageEnricher.js` via
+  `google_images`: `item.image_url ?? fetch(query) ?? placeholder`; log
+  `image_hit`/`image_fallback`. No Item leaves without an image attempt.
+- [ ] **Task 5 — Knowledge Graph resolver.** `src/serp/knowledgeGraph.js`:
+  proper-noun/"near X"/brand signals → `{name,address,lat,lng,type}` injected
+  as dispatcher context, never as a product.
+- [ ] **Task 6 — Intent classifier (Groq).** `src/agent/tools/classifyIntent.js`
+  StructuredTool on ChatGroq → `{vertical, confidence, signals}`; low
+  confidence → `retail_general`.
+- [ ] **Task 7 — LangChain migration.** `src/agent/llm.js` (ChatGroq) +
+  `src/agent/tools/*.js` (StructuredTool+zod per vertical + order/status/
+  upsell) + `src/agent/run.js` (agent+executor, maxIterations 8, system prompt
+  = current + routing/image/markdown rules, memory via session_id). `/chat`
+  switches to `run.js`; old files kept one release.
+- [ ] **Task 8 — LangSmith + Langfuse.** `src/observe/*`: trace every run,
+  return `trace_id` in `/chat`, write it into audit lines; Langfuse scores
+  `buy_success/image_hit/disambiguation_hit`.
+- [ ] **Task 9 — One-click Buy.** `CreateOrderTool` = `createOrder` +
+  `createPaymentLink` (receipt UUID, qty default 1, ID matched from cached
+  search results); returns `{order_id, payment_link}`. Frontend Buy Now posts
+  the `I want to buy <name> (ID: <id>)` message — no follow-up questions.
+- [ ] **Task 10 — Chat contract + cards.** Backend returns
+  `{reply_markdown, items, order_id, payment_link, tools_used, trace_id}`;
+  `ProductCard.jsx` shows image/shop/location/price/discount/rating/delivery/
+  Buy Now/View Details; `ChatWidget` renders full `react-markdown`+`remark-gfm`.
+- [ ] **Task 11 — Frontend makeover (additive-only).** New Vortex hero ("use it
+  for anything": retail, travel, local, digital), 4-vertical How-It-Works,
+  category shortcuts route to `/chat` with initial queries. **Do not delete**
+  ChatWidget/Dashboard/cart/audit table — only add sections/columns/strings.
+- [ ] **Task 12 — Audit + Dashboard extension.** Logger accepts
+  `vertical/engine/trace_id/image_url` (old readers tolerant); Dashboard adds
+  columns/filters, keeps existing cards + live feed + `npm run audit`.
+- [ ] **Task 13 — Tests, docs, release.** Jest per adapter/tool/router/
+  enricher/resolver + Buy flow + frozen-money pins; update `.env.example`,
+  `docs/*`, this README; `npm test` green; tag `vortex-v2.0`.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed explanations of every architectural choice.
--->
-Tech Stack, Architecture, Demo Script - To be updated soon
+## Audit trail
+
+Append-only JSONL (`audit.log`), newest-first via `GET /audit`. Every money
+action carries `agent_reasoning` (why) + `session_id` (+ new
+`vertical/engine/trace_id`). Actions: `order_created, payment_captured,
+upsell_shown, payment_failed, retry_attempted, link_sent` (+ `image_fallback`
+observations). Never rewrite history — extend fields only.
 
 ## License
 
