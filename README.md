@@ -59,7 +59,7 @@ Browser → Express (/chat,/orders,/audit,/webhook) → LangChain Agent (ChatGro
 LangChain (`langchain`, `@langchain/core`, `@langchain/groq` ChatGroq),
 `langsmith`, `langfuse`, `zod`, React+Vite+Tailwind,
 `react-markdown`+`remark-gfm`. **Grok/Groq is the only LLM.**
-**Razorpay logic is never changed**, only wrapped.
+**Razorpay logic is constantd**, only wrapped.
 
 ## Setup
 
@@ -164,7 +164,7 @@ client/src/pages/Dashboard.jsx        # EXTEND-ONLY: + vertical/engine/trace col
 row; L — adapters/tools substitutable via base classes; I —
 `ISerpAdapter/IPaymentService/IImageEnricher` small interfaces; D — agent
 depends on interfaces, factories wire concretions.
-
+<!--
 ## Task plan (Task 1 → Task N — implement in order)
 
 - [ ] **Task 1 — Rename RazorAgent→Vortex Commerce (no logic).** `package.json`
@@ -215,7 +215,7 @@ depends on interfaces, factories wire concretions.
 - [ ] **Task 13 — Tests, docs, release.** Jest per adapter/tool/router/
   enricher/resolver + Buy flow + frozen-money pins; update `.env.example`,
   `docs/*`, this README; `npm test` green; tag `vortex-v2.0`.
-
+-->
 ## Audit trail
 
 Append-only JSONL (`audit.log`), newest-first via `GET /audit`. Every money
